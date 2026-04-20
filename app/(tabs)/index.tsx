@@ -6,10 +6,9 @@ import { supabase } from '../../lib/supabase';
 type Product = {
   id: string;
   name: string;
-  brand: { name: string } | null;
+  brands: { name: string } | null;
   category: string;
   capacity: string;
-  // Add image_url later when you have images
 };
 
 export default function HomeScreen() {
@@ -49,7 +48,7 @@ export default function HomeScreen() {
           style={{ padding: 15, borderBottomWidth: 1, borderColor: '#eee' }}
         >
           <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.name}</Text>
-          <Text>{item.brand?.name || 'Unknown brand'}</Text>
+          <Text>{item.brands?.name || 'Unknown brand'}</Text>
           <Text style={{ color: '#666' }}>{item.category} • {item.capacity}</Text>
         </TouchableOpacity>
       )}
