@@ -1,7 +1,7 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
-import { supabase } from '../../lib/supabase';
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { supabase } from "../../lib/supabase";
 
 type ProductDetail = {
   id: string;
@@ -28,15 +28,17 @@ export default function ProductScreen() {
 
   async function fetchProduct(productId: string) {
     const { data, error } = await supabase
-      .from('products')
-      .select(`
+      .from("products")
+      .select(
+        `
         *,
         brand:brands(name),
         product_functions(function_id, functions(name)),
         product_ingredients(ingredient_id, ingredients(name)),
         product_skin_types(skin_type_id, skin_types(name))
-      `)
-      .eq('id', productId)
+      `,
+      )
+      .eq("id", productId)
       .single();
 
     if (error) console.error(error);
@@ -49,11 +51,13 @@ export default function ProductScreen() {
 
   return (
     <ScrollView style={{ padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>{product.name}</Text>
-      <Text style={{ fontSize: 18, marginVertical: 5 }}>{product.brand?.name}</Text>
-      
+      <Text style={{ fontSize: 24, fontWeight: "bold" }}>{product.name}</Text>
+      <Text style={{ fontSize: 18, marginVertical: 5 }}>
+        {product.brand?.name}
+      </Text>
+
       <View style={{ marginVertical: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Details</Text>
+        <Text style={{ fontWeight: "bold" }}>Details</Text>
         <Text>Category: {product.category}</Text>
         <Text>Texture: {product.texture}</Text>
         <Text>Size: {product.capacity}</Text>
@@ -61,21 +65,21 @@ export default function ProductScreen() {
       </View>
 
       <View style={{ marginVertical: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Functions</Text>
+        <Text style={{ fontWeight: "bold" }}>Functions</Text>
         {product.product_functions.map((pf) => (
           <Text key={pf.function_id}>• {pf.functions?.name}</Text>
         ))}
       </View>
 
       <View style={{ marginVertical: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Key Ingredients</Text>
+        <Text style={{ fontWeight: "bold" }}>Key Ingredients</Text>
         {product.product_ingredients.map((pi) => (
           <Text key={pi.ingredient_id}>• {pi.ingredients?.name}</Text>
         ))}
       </View>
 
       <View style={{ marginVertical: 15 }}>
-        <Text style={{ fontWeight: 'bold' }}>Suitable for</Text>
+        <Text style={{ fontWeight: "bold" }}>Suitable for</Text>
         {product.product_skin_types.map((pst) => (
           <Text key={pst.skin_type_id}>• {pst.skin_types?.name}</Text>
         ))}
