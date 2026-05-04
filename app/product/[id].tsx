@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useCart } from '../../context/CartContext';
 import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
@@ -62,6 +64,7 @@ export default function ProductScreen() {
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const { addItem } = useCart(); // <-- cart hook
 
   useEffect(() => {
     if (id) fetchProduct(id);
@@ -146,7 +149,8 @@ export default function ProductScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView>
+      {/* Scrollable content */}
+      <ScrollView style={{ flex: 1 }}>
         {/* Image Carousel */}
         {allImages.length > 0 && (
           <View>
@@ -407,6 +411,31 @@ export default function ProductScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Add to Cart button – fixed at the bottom */}
+      <View
+        style={{
+          padding: 16,
+          borderTopWidth: 1,
+          borderColor: '#eee',
+          backgroundColor: '#fff',
+        }}>
+        <TouchableOpacity
+          onPress={() => {
+            addItem(product.id);
+            Alert.alert('Added to cart', `${product.name} has been added to your cart.`);
+          }}
+          style={{
+            backgroundColor: '#007AFF',
+            padding: 16,
+            borderRadius: 8,
+            alignItems: 'center',
+          }}>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+            Add to Cart
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
