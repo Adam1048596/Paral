@@ -29,7 +29,7 @@ export default function Index() {
     >
       {/* LOGO */}
       <Image
-        source={require("../assets/logo.png")} // 👈 your logo
+        source={require("../assets/logo/paral-logo.png")}
         style={{ width: 120, height: 120, marginBottom: 20 }}
         resizeMode="contain"
       />
