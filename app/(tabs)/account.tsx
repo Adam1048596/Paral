@@ -9,16 +9,13 @@ type Profile = {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-};
-
-type LoyaltyAccount = {
-  points_balance: number;
-  current_streak_days: number;
+  phone: string | null;
 };
 
 export default function AccountScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loyalty, setLoyalty] = useState<LoyaltyAccount | null>(null);
+  const [points, setPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,42 +30,55 @@ export default function AccountScreen() {
       return;
     }
 
-    // Fetch profile from public.profiles table
+    // Fetch or create profile
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
 
-    setProfile(profileData || { id: user.id, email: user.email || '', full_name: null, avatar_url: null });
+    const userProfile = profileData || {
+      id: user.id,
+      email: user.email || '',
+      full_name: null,
+      avatar_url: null,
+      phone: null,
+    };
+    setProfile(userProfile);
 
-    // Fetch loyalty account (if exists)
-    const { data: loyaltyData } = await supabase
-      .from('loyalty_accounts')
-      .select('points_balance, current_streak_days')
-      .eq('user_id', user.id)
-      .single();
+    // Try to fetch loyalty data (table may not exist yet, so catch errors)
+    try {
+      const { data: loyalty } = await supabase
+        .from('loyalty_accounts')
+        .select('points_balance, current_streak_days')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    setLoyalty(loyaltyData || { points_balance: 0, current_streak_days: 0 });
+      if (loyalty) {
+        setPoints(loyalty.points_balance || 0);
+        setStreak(loyalty.current_streak_days || 0);
+      }
+    } catch {
+      // loyalty table not yet created – just use defaults
+      setPoints(0);
+      setStreak(0);
+    }
+
     setLoading(false);
   }
 
   async function handleLogout() {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await supabase.auth.signOut();
-            router.replace('/(auth)/sign-in');
-          },
+    Alert.alert('Logout', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.auth.signOut();
+          router.replace('/(auth)/sign-in');
         },
-      ]
-    );
+      },
+    ]);
   }
 
   if (loading) {
@@ -79,7 +89,7 @@ export default function AccountScreen() {
     <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
       {/* Profile Header */}
       <View style={{ backgroundColor: '#fff', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderColor: '#eee' }}>
-        <TouchableOpacity onPress={() => {/* Navigate to edit profile */}}>
+        <TouchableOpacity onPress={() => router.push('/settings')}>
           {profile?.avatar_url ? (
             <Image source={{ uri: profile.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40 }} />
           ) : (
@@ -90,7 +100,9 @@ export default function AccountScreen() {
             </View>
           )}
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 12 }}>{profile?.full_name || 'User'}</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', marginTop: 12 }}>
+          {profile?.full_name || 'User'}
+        </Text>
         <Text style={{ color: '#666', marginTop: 4 }}>{profile?.email}</Text>
       </View>
 
@@ -99,42 +111,26 @@ export default function AccountScreen() {
         <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>Loyalty Program</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#007AFF' }}>{loyalty?.points_balance || 0}</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#007AFF' }}>{points}</Text>
             <Text style={{ color: '#666' }}>Points</Text>
           </View>
           <View style={{ width: 1, backgroundColor: '#eee' }} />
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FF9500' }}>{loyalty?.current_streak_days || 0}</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FF9500' }}>{streak}</Text>
             <Text style={{ color: '#666' }}>Day Streak</Text>
           </View>
         </View>
-        <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }}>
+        <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => router.push('/loyalty-history')}>
           <Text style={{ color: '#007AFF' }}>View Points History →</Text>
         </TouchableOpacity>
       </View>
 
       {/* Menu Options */}
       <View style={{ backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 12, overflow: 'hidden' }}>
-        <MenuItem
-          icon="heart-outline"
-          label="Favorites"
-          onPress={() => {/* Navigate to favorites */}}
-        />
-        <MenuItem
-          icon="location-outline"
-          label="Shipping Addresses"
-          onPress={() => {/* Navigate to addresses */}}
-        />
-        <MenuItem
-          icon="receipt-outline"
-          label="Order History"
-          onPress={() => {/* Navigate to orders */}}
-        />
-        <MenuItem
-          icon="settings-outline"
-          label="Settings"
-          onPress={() => {/* Navigate to settings */}}
-        />
+        <MenuItem icon="heart-outline" label="Favorites" onPress={() => router.push('/favorites')} />
+        <MenuItem icon="location-outline" label="Shipping Addresses" onPress={() => router.push('/addresses')} />
+        <MenuItem icon="receipt-outline" label="Order History" onPress={() => router.push('/orders')} />
+        <MenuItem icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} />
       </View>
 
       {/* Logout Button */}
@@ -149,7 +145,6 @@ export default function AccountScreen() {
   );
 }
 
-// Reusable menu item component
 function MenuItem({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
   return (
     <TouchableOpacity
