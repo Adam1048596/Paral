@@ -103,7 +103,6 @@ export default function ProductScreen() {
     if (!user || !product) return;
 
     if (isFavorited) {
-      // Remove from favorites
       const { error } = await supabase
         .from('favorites')
         .delete()
@@ -111,7 +110,6 @@ export default function ProductScreen() {
         .eq('product_id', product.id);
       if (!error) setIsFavorited(false);
     } else {
-      // Add to favorites
       const { error } = await supabase
         .from('favorites')
         .insert({ user_id: user.id, product_id: product.id });
@@ -324,19 +322,107 @@ export default function ProductScreen() {
               <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.warnings}</Text>
             </View>
           )}
+
+          {/* ========== CUSTOMER REVIEWS ========== */}
+          <View style={{ borderTopWidth: 1, borderColor: '#eee', paddingTop: 20, marginTop: 10 }}>
+            <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 12 }}>Customer Reviews</Text>
+            <ReviewsSection productId={product.id} />
+          </View>
         </View>
       </ScrollView>
 
+      {/* Bottom Buttons */}
       <View style={{ padding: 16, borderTopWidth: 1, borderColor: '#eee', backgroundColor: '#fff' }}>
+        {user && (
+          <TouchableOpacity
+            style={{
+              padding: 12,
+              backgroundColor: '#f0f0f0',
+              borderRadius: 8,
+              marginBottom: 12,
+            }}
+            onPress={() =>
+              router.push({
+                pathname: '/write-review',
+                params: { productId: product.id },
+              })
+            }>
+            <Text style={{ textAlign: 'center', color: '#007AFF', fontWeight: '600' }}>
+              Write a Review
+            </Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           onPress={() => {
             addItem(product.id);
             Alert.alert('Added to cart', `${product.name} has been added to your cart.`);
           }}
-          style={{ backgroundColor: '#007AFF', padding: 16, borderRadius: 8, alignItems: 'center' }}>
+          style={{
+            backgroundColor: '#007AFF',
+            padding: 16,
+            borderRadius: 8,
+            alignItems: 'center',
+          }}>
           <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
+}
+
+// ====================== REVIEWS COMPONENT ======================
+function ReviewsSection({ productId }: { productId: string }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [productId]);
+
+  async function fetchReviews() {
+    const { data } = await supabase
+      .from('reviews')
+      .select('id, rating, review_text, image_url, created_at, user:user_id ( full_name )')
+      .eq('product_id', productId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    setReviews(data || []);
+    setLoadingReviews(false);
+  }
+
+  if (loadingReviews) return <ActivityIndicator />;
+  if (reviews.length === 0) {
+    return (
+      <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+        <Text style={{ color: '#888' }}>No reviews yet. Be the first!</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      {reviews.map((review) => (
+        <View key={review.id} style={{ paddingVertical: 12, borderBottomWidth: 1, borderColor: '#f0f0f0' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontWeight: '600' }}>{review.user?.full_name || 'Anonymous'}</Text>
+            <View style={{ flexDirection: 'row', marginLeft: 8 }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Ionicons
+                  key={star}
+                  name={star <= review.rating ? 'star' : 'star-outline'}
+                  size={16}
+                  color="#FFD700"
+                />
+              ))}
+            </View>
+          </View>
+          {review.review_text ? <Text style={{ marginTop: 4, color: '#333' }}>{review.review_text}</Text> : null}
+          {review.image_url ? (
+            <Image source={{ uri: review.image_url }} style={{ width: 100, height: 100, borderRadius: 8, marginTop: 8 }} resizeMode="cover" />
+          ) : null}
+        </View>
+      ))}
     </View>
   );
 }
