@@ -1,17 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  FlatList,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, FlatList, Image, ScrollView, Text, TouchableOpacity, View, } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { supabase } from '../../lib/supabase';
 
@@ -51,7 +42,6 @@ type ProductDetail = {
   product_details: ProductDetails | null;
 };
 
-// If image_path is a relative path, convert it to a full Supabase storage URL
 function getPublicUrl(path: string): string {
   if (path.startsWith('http')) return path;
   const { data } = supabase.storage.from('product').getPublicUrl(path);
@@ -63,12 +53,17 @@ export default function ProductScreen() {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isFavorited, setIsFavorited] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const { addItem } = useCart(); // <-- cart hook
+  const { addItem } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (id) fetchProduct(id);
-  }, [id]);
+    if (id) {
+      fetchProduct(id);
+      if (user) checkFavorite(id);
+    }
+  }, [id, user]);
 
   async function fetchProduct(productId: string) {
     const { data, error } = await supabase
@@ -93,7 +88,37 @@ export default function ProductScreen() {
     setLoading(false);
   }
 
-  // Combine main image + gallery images into one array for the carousel
+  async function checkFavorite(productId: string) {
+    if (!user) return;
+    const { data } = await supabase
+      .from('favorites')
+      .select('product_id')
+      .eq('user_id', user.id)
+      .eq('product_id', productId)
+      .maybeSingle();
+    setIsFavorited(!!data);
+  }
+
+  async function toggleFavorite() {
+    if (!user || !product) return;
+
+    if (isFavorited) {
+      // Remove from favorites
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', product.id);
+      if (!error) setIsFavorited(false);
+    } else {
+      // Add to favorites
+      const { error } = await supabase
+        .from('favorites')
+        .insert({ user_id: user.id, product_id: product.id });
+      if (!error) setIsFavorited(true);
+    }
+  }
+
   const allImages: string[] = [];
   if (product?.image_main) {
     allImages.push(getPublicUrl(product.image_main));
@@ -144,12 +169,15 @@ export default function ProductScreen() {
           }}>
           {product.name}
         </Text>
-        <TouchableOpacity>
-          <Ionicons name="heart-outline" size={28} color="#333" />
+        <TouchableOpacity onPress={toggleFavorite}>
+          <Ionicons
+            name={isFavorited ? 'heart' : 'heart-outline'}
+            size={28}
+            color={isFavorited ? '#FF3B30' : '#333'}
+          />
         </TouchableOpacity>
       </View>
 
-      {/* Scrollable content */}
       <ScrollView style={{ flex: 1 }}>
         {/* Image Carousel */}
         {allImages.length > 0 && (
@@ -175,7 +203,6 @@ export default function ProductScreen() {
                 />
               )}
             />
-            {/* Dot indicators */}
             {allImages.length > 1 && (
               <View
                 style={{
@@ -201,239 +228,113 @@ export default function ProductScreen() {
           </View>
         )}
 
-        {/* Product Info */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
-            {product.name}
-          </Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>{product.name}</Text>
           <Text style={{ fontSize: 16, color: '#555', marginTop: 4 }}>
             {product.brand?.name || 'Unknown brand'}
           </Text>
 
-          {/* Quick Details - NOW INCLUDES department & area */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 }}>
             {product.department && (
-              <View
-                style={{
-                  backgroundColor: '#eef2f7',
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  marginRight: 8,
-                  marginBottom: 8,
-                }}>
-                <Text style={{ textTransform: 'capitalize' }}>
-                  {product.department}
-                </Text>
+              <View style={{ backgroundColor: '#eef2f7', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
+                <Text style={{ textTransform: 'capitalize' }}>{product.department}</Text>
               </View>
             )}
             {product.area && (
-              <View
-                style={{
-                  backgroundColor: '#eef2f7',
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  marginRight: 8,
-                  marginBottom: 8,
-                }}>
+              <View style={{ backgroundColor: '#eef2f7', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
                 <Text style={{ textTransform: 'capitalize' }}>{product.area}</Text>
               </View>
             )}
             {product.category && (
-              <View
-                style={{
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  marginRight: 8,
-                  marginBottom: 8,
-                }}>
+              <View style={{ backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
                 <Text>{product.category}</Text>
               </View>
             )}
             {product.texture && (
-              <View
-                style={{
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  marginRight: 8,
-                  marginBottom: 8,
-                }}>
+              <View style={{ backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
                 <Text>{product.texture}</Text>
               </View>
             )}
             {product.capacity && (
-              <View
-                style={{
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  marginRight: 8,
-                  marginBottom: 8,
-                }}>
+              <View style={{ backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
                 <Text>{product.capacity}</Text>
               </View>
             )}
           </View>
 
-          {/* Functions */}
           {product.product_functions.length > 0 && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>
-                What it does
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>What it does</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {product.product_functions.map((pf) => (
-                  <View
-                    key={pf.function_id}
-                    style={{
-                      backgroundColor: '#e8f0fe',
-                      borderRadius: 16,
-                      paddingHorizontal: 14,
-                      paddingVertical: 6,
-                      marginRight: 8,
-                      marginBottom: 8,
-                    }}>
-                    <Text style={{ color: '#1a73e8' }}>
-                      {pf.functions?.name}
-                    </Text>
+                  <View key={pf.function_id} style={{ backgroundColor: '#e8f0fe', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
+                    <Text style={{ color: '#1a73e8' }}>{pf.functions?.name}</Text>
                   </View>
                 ))}
               </View>
             </View>
           )}
 
-          {/* Ingredients */}
           {product.product_ingredients.length > 0 && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>
-                Key Ingredients
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>Key Ingredients</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {product.product_ingredients.map((pi) => (
-                  <View
-                    key={pi.ingredient_id}
-                    style={{
-                      backgroundColor: '#f0f0f0',
-                      borderRadius: 16,
-                      paddingHorizontal: 14,
-                      paddingVertical: 6,
-                      marginRight: 8,
-                      marginBottom: 8,
-                      borderWidth: 1,
-                      borderColor: '#e0e0e0',
-                    }}>
-                    <Text style={{ color: '#555' }}>
-                      {pi.ingredients?.name}
-                    </Text>
+                  <View key={pi.ingredient_id} style={{ backgroundColor: '#f0f0f0', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6, marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e0e0e0' }}>
+                    <Text style={{ color: '#555' }}>{pi.ingredients?.name}</Text>
                   </View>
                 ))}
               </View>
             </View>
           )}
 
-          {/* Detailed Education (product_details) */}
           {product.product_details?.what_it_does && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>
-                Description
-              </Text>
-              <Text style={{ lineHeight: 22, color: '#444' }}>
-                {product.product_details.what_it_does}
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>Description</Text>
+              <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.what_it_does}</Text>
             </View>
           )}
-
           {product.product_details?.how_to_use && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>
-                How to Use
-              </Text>
-              <Text style={{ lineHeight: 22, color: '#444' }}>
-                {product.product_details.how_to_use}
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>How to Use</Text>
+              <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.how_to_use}</Text>
             </View>
           )}
-
           {product.product_details?.who_its_for && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>
-                Who is it for?
-              </Text>
-              <Text style={{ lineHeight: 22, color: '#444' }}>
-                {product.product_details.who_its_for}
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>Who is it for?</Text>
+              <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.who_its_for}</Text>
             </View>
           )}
-
           {product.product_details?.ingredient_spotlight && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>
-                Key Ingredient
-              </Text>
-              <Text style={{ lineHeight: 22, color: '#444' }}>
-                {product.product_details.ingredient_spotlight}
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>Key Ingredient</Text>
+              <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.ingredient_spotlight}</Text>
             </View>
           )}
-
           {product.product_details?.tips && (
             <View style={{ marginTop: 20 }}>
-              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>
-                Pro Tips
-              </Text>
-              <Text style={{ lineHeight: 22, color: '#444' }}>
-                {product.product_details.tips}
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>Pro Tips</Text>
+              <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.tips}</Text>
             </View>
           )}
-
           {product.product_details?.warnings && (
             <View style={{ marginTop: 20, marginBottom: 40 }}>
-              <Text
-                style={{
-                  fontWeight: '600',
-                  fontSize: 16,
-                  marginBottom: 6,
-                  color: '#d32f2f',
-                }}>
-                Warnings
-              </Text>
-              <Text style={{ lineHeight: 22, color: '#444' }}>
-                {product.product_details.warnings}
-              </Text>
+              <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6, color: '#d32f2f' }}>Warnings</Text>
+              <Text style={{ lineHeight: 22, color: '#444' }}>{product.product_details.warnings}</Text>
             </View>
           )}
         </View>
       </ScrollView>
 
-      {/* Add to Cart button – fixed at the bottom */}
-      <View
-        style={{
-          padding: 16,
-          borderTopWidth: 1,
-          borderColor: '#eee',
-          backgroundColor: '#fff',
-        }}>
+      <View style={{ padding: 16, borderTopWidth: 1, borderColor: '#eee', backgroundColor: '#fff' }}>
         <TouchableOpacity
           onPress={() => {
             addItem(product.id);
             Alert.alert('Added to cart', `${product.name} has been added to your cart.`);
           }}
-          style={{
-            backgroundColor: '#007AFF',
-            padding: 16,
-            borderRadius: 8,
-            alignItems: 'center',
-          }}>
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-            Add to Cart
-          </Text>
+          style={{ backgroundColor: '#007AFF', padding: 16, borderRadius: 8, alignItems: 'center' }}>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
     </View>
