@@ -1,17 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -21,17 +11,7 @@ export default function WriteReviewScreen() {
 
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
-  const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-
-  async function pickImage() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
-    if (!result.canceled && result.assets?.[0]) {
-      setImage(result.assets[0].uri);
-    }
-  }
 
   async function handleSubmit() {
     if (!rating) {
@@ -41,49 +21,30 @@ export default function WriteReviewScreen() {
     if (!user || !productId) return;
 
     setUploading(true);
-    let imageUrl: string | null = null;
 
-    try {
-      // Upload photo if selected
-      if (image) {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const path = `reviews/${user.id}/${Date.now()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from('product')
-          .upload(path, blob);
-        if (uploadError) throw uploadError;
-        const { data } = supabase.storage.from('product').getPublicUrl(path);
-        imageUrl = data.publicUrl;
-      }
+    const { error: insertError } = await supabase.from('reviews').insert({
+      user_id: user.id,
+      product_id: productId,
+      rating,
+      review_text: reviewText,
+      has_photo: false,
+      image_url: null,
+    });
 
-      // Insert review
-      const { error: insertError } = await supabase.from('reviews').insert({
-        user_id: user.id,
-        product_id: productId,
-        rating,
-        review_text: reviewText,
-        has_photo: !!imageUrl,
-        image_url: imageUrl,
-      });
-
-      if (insertError) {
-        // Only possible error in normal use: duplicate review (unique constraint)
-        if (insertError.code === '23505') {
-          Alert.alert('Already reviewed', 'You have already left a review for this product.');
-        } else {
-          Alert.alert('Error', insertError.message);
-        }
+    if (insertError) {
+      // 23505 = duplicate key (already reviewed this product)
+      if (insertError.code === '23505') {
+        Alert.alert('Already reviewed', 'You have already left a review for this product.');
       } else {
-        Alert.alert('Thank you!', 'Your review has been published.', [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
+        Alert.alert('Error', insertError.message);
       }
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Something went wrong.');
-    } finally {
-      setUploading(false);
+    } else {
+      Alert.alert('Thank you!', 'Your review has been published.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
     }
+
+    setUploading(false);
   }
 
   return (
@@ -122,34 +83,6 @@ export default function WriteReviewScreen() {
         value={reviewText}
         onChangeText={setReviewText}
       />
-
-      {/* Photo upload */}
-      <Text style={{ marginBottom: 8 }}>Add a photo (optional)</Text>
-      {image ? (
-        <View style={{ marginBottom: 16 }}>
-          <Image
-            source={{ uri: image }}
-            style={{ width: 150, height: 150, borderRadius: 8 }}
-          />
-          <TouchableOpacity onPress={() => setImage(null)}>
-            <Text style={{ color: 'red', marginTop: 4 }}>Remove</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity
-          onPress={pickImage}
-          style={{
-            borderWidth: 1,
-            borderColor: '#007AFF',
-            borderRadius: 8,
-            padding: 12,
-            alignItems: 'center',
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ color: '#007AFF' }}>Pick Photo</Text>
-        </TouchableOpacity>
-      )}
 
       {/* Submit button */}
       <TouchableOpacity

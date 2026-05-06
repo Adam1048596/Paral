@@ -1,7 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
 
 type Profile = {
@@ -14,8 +21,8 @@ type Profile = {
 
 export default function AccountScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [points, setPoints] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const [availablePoints, setAvailablePoints] = useState(0);
+  const [pendingPoints, setPendingPoints] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,44 +31,45 @@ export default function AccountScreen() {
 
   async function fetchUserData() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       router.replace('/(auth)/sign-in');
       return;
     }
 
-    // Fetch or create profile
+    // Profile
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
 
-    const userProfile = profileData || {
-      id: user.id,
-      email: user.email || '',
-      full_name: null,
-      avatar_url: null,
-      phone: null,
-    };
-    setProfile(userProfile);
+    setProfile(
+      profileData || {
+        id: user.id,
+        email: user.email || '',
+        full_name: null,
+        avatar_url: null,
+        phone: null,
+      }
+    );
 
-    // Try to fetch loyalty data (table may not exist yet, so catch errors)
+    // Glow Points (from user_points table)
     try {
-      const { data: loyalty } = await supabase
-        .from('loyalty_accounts')
-        .select('points_balance, current_streak_days')
+      const { data: pointsData } = await supabase
+        .from('user_points')
+        .select('available_points, pending_points')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (loyalty) {
-        setPoints(loyalty.points_balance || 0);
-        setStreak(loyalty.current_streak_days || 0);
+      if (pointsData) {
+        setAvailablePoints(pointsData.available_points || 0);
+        setPendingPoints(pointsData.pending_points || 0);
       }
     } catch {
-      // loyalty table not yet created – just use defaults
-      setPoints(0);
-      setStreak(0);
+      // Table may not exist yet – leave zeros
     }
 
     setLoading(false);
@@ -88,14 +96,34 @@ export default function AccountScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
       {/* Profile Header */}
-      <View style={{ backgroundColor: '#fff', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderColor: '#eee' }}>
+      <View
+        style={{
+          backgroundColor: '#fff',
+          padding: 20,
+          alignItems: 'center',
+          borderBottomWidth: 1,
+          borderColor: '#eee',
+        }}>
         <TouchableOpacity onPress={() => router.push('/settings')}>
           {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+            <Image
+              source={{ uri: profile.avatar_url }}
+              style={{ width: 80, height: 80, borderRadius: 40 }}
+            />
           ) : (
-            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: '#007AFF',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <Text style={{ color: '#fff', fontSize: 30, fontWeight: 'bold' }}>
-                {profile?.full_name?.charAt(0) || profile?.email?.charAt(0).toUpperCase() || 'U'}
+                {profile?.full_name?.charAt(0) ||
+                  profile?.email?.charAt(0).toUpperCase() ||
+                  'U'}
               </Text>
             </View>
           )}
@@ -106,51 +134,124 @@ export default function AccountScreen() {
         <Text style={{ color: '#666', marginTop: 4 }}>{profile?.email}</Text>
       </View>
 
-      {/* Loyalty Card */}
-      <View style={{ backgroundColor: '#fff', margin: 16, padding: 16, borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 }}>
-        <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>Loyalty Program</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#007AFF' }}>{points}</Text>
-            <Text style={{ color: '#666' }}>Points</Text>
-          </View>
-          <View style={{ width: 1, backgroundColor: '#eee' }} />
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FF9500' }}>{streak}</Text>
-            <Text style={{ color: '#666' }}>Day Streak</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => router.push('/loyalty-history')}>
+      {/* Glow Points Card */}
+      <View
+        style={{
+          backgroundColor: '#fff',
+          margin: 16,
+          padding: 16,
+          borderRadius: 12,
+          shadowColor: '#000',
+          shadowOpacity: 0.05,
+          shadowRadius: 5,
+          elevation: 2,
+        }}>
+        <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 8 }}>
+          Glow Points
+        </Text>
+
+        <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>
+          {availablePoints}
+        </Text>
+        <Text style={{ textAlign: 'center', color: '#666', marginTop: 4 }}>
+          Points available
+        </Text>
+
+        {pendingPoints > 0 && (
+          <Text
+            style={{
+              textAlign: 'center',
+              color: '#FF9500',
+              marginTop: 6,
+              fontWeight: '500',
+            }}>
+            +{pendingPoints} incoming
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={{ marginTop: 16, alignItems: 'center' }}
+          onPress={() => router.push('/loyalty-history')}>
           <Text style={{ color: '#007AFF' }}>View Points History →</Text>
         </TouchableOpacity>
       </View>
 
       {/* Menu Options */}
-      <View style={{ backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 12, overflow: 'hidden' }}>
-        <MenuItem icon="heart-outline" label="Favorites" onPress={() => router.push('/favorites')} />
-        <MenuItem icon="location-outline" label="Shipping Addresses" onPress={() => router.push('/addresses')} />
-        <MenuItem icon="receipt-outline" label="Order History" onPress={() => router.push('/orders')} />
-        <MenuItem icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} />
+      <View
+        style={{
+          backgroundColor: '#fff',
+          marginHorizontal: 16,
+          borderRadius: 12,
+          overflow: 'hidden',
+        }}>
+        <MenuItem
+          icon="heart-outline"
+          label="Favorites"
+          onPress={() => router.push('/favorites')}
+        />
+        <MenuItem
+          icon="location-outline"
+          label="Shipping Addresses"
+          onPress={() => router.push('/addresses')}
+        />
+        <MenuItem
+          icon="receipt-outline"
+          label="Order History"
+          onPress={() => router.push('/orders')}
+        />
+        <MenuItem
+          icon="settings-outline"
+          label="Settings"
+          onPress={() => router.push('/settings')}
+        />
       </View>
 
       {/* Logout Button */}
       <TouchableOpacity
         onPress={handleLogout}
-        style={{ marginHorizontal: 16, marginTop: 24, padding: 16, backgroundColor: '#fff', borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}
-      >
+        style={{
+          marginHorizontal: 16,
+          marginTop: 24,
+          padding: 16,
+          backgroundColor: '#fff',
+          borderRadius: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}>
         <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-        <Text style={{ marginLeft: 12, color: '#FF3B30', fontSize: 16, fontWeight: '500' }}>Logout</Text>
+        <Text
+          style={{
+            marginLeft: 12,
+            color: '#FF3B30',
+            fontSize: 16,
+            fontWeight: '500',
+          }}>
+          Logout
+        </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-function MenuItem({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+function MenuItem({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: string;
+  label: string;
+  onPress: () => void;
+}) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: '#f0f0f0' }}
-    >
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderColor: '#f0f0f0',
+      }}>
       <Ionicons name={icon as any} size={24} color="#333" style={{ width: 30 }} />
       <Text style={{ flex: 1, fontSize: 16, marginLeft: 12 }}>{label}</Text>
       <Ionicons name="chevron-forward" size={20} color="#ccc" />
