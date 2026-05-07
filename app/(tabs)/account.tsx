@@ -190,6 +190,11 @@ export default function AccountScreen() {
           onPress={() => router.push('/favorites')}
         />
         <MenuItem
+          icon="pricetag-outline"
+          label="My Rewards"
+          onPress={() => router.push('/my-rewards')}
+        />
+        <MenuItem
           icon="location-outline"
           label="Shipping Addresses"
           onPress={() => router.push('/addresses')}
@@ -198,6 +203,11 @@ export default function AccountScreen() {
           icon="receipt-outline"
           label="Order History"
           onPress={() => router.push('/orders')}
+        />
+        <MenuItem
+          icon="gift-outline"
+          label="Rewards Shop"
+          onPress={() => router.push('/rewards-shop')}
         />
         <MenuItem
           icon="settings-outline"
