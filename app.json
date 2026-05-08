@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/logo/paral-logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.nasr1048596.Paral"
     },
     "web": {
       "output": "static",
@@ -30,12 +31,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/logo/paral-logo.png",
-          "imageWidth": 70,
+          "image": "./assets/logo/logo_icon&text.png",
+          "imageWidth": 150,
           "resizeMode": "contain",
-          "backgroundColor": "#000000",
+          "backgroundColor": "#00fea4",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#00fea4"
           }
         }
       ],
@@ -44,6 +45,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4e3092d6-78a6-4c1d-9e5b-70bbfead1559"
+      }
     }
   }
 }

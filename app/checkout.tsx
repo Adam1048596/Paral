@@ -1,14 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { supabase } from '../lib/supabase';
@@ -24,7 +17,7 @@ type Address = {
 };
 
 type MyReward = {
-  id: string;                 // redemption id
+  id: string;
   reward_id: string;
   reward: {
     type: string;
@@ -186,7 +179,7 @@ export default function CheckoutScreen() {
     if (!address) return;
 
     setSubmitting(true);
-    const orderNumber = `PARAL-${Date.now()}`;
+    const orderNumber = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Snapshot of applied rewards (include shipping notice)
     const appliedRewards = myRewards
