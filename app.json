@@ -4,7 +4,7 @@
     "slug": "Paral",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo/paral-logo.png",
+    "icon": "./assets/logo/logo_icon&text_dark.png",
     "scheme": "paral",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,10 +13,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/logo/paral-logo.png",
-        "backgroundImage": "./assets/logo/paral-logo.png",
-        "monochromeImage": "./assets/logo/paral-logo.png"
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/logo/logo_icon&text_dark.png",
+        "backgroundImage": "./assets/logo/logo_icon&text_dark.png",
+        "monochromeImage": "./assets/logo/logo_icon&text_dark.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -34,9 +34,9 @@
           "image": "./assets/logo/logo_icon&text_dark.png",
           "imageWidth": 130,
           "resizeMode": "contain",
-          "backgroundColor": "#00fea4",
+          "backgroundColor": "#000000",
           "dark": {
-            "backgroundColor": "#00fea4"
+            "backgroundColor": "#000000"
           }
         }
       ],

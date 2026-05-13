@@ -1,42 +1,35 @@
-import { Session } from '@supabase/supabase-js';
+/**
+ * RootLayout – Top-level wrapper for the entire app.
+ *
+ * Responsibilities:
+ *  - Prevent the native splash from hiding automatically
+ *  - Hide the native splash as soon as this component mounts (fast!)
+ *  - Provide Auth and Cart contexts to all screens
+ *  - Render the current route via <Slot />
+ */
+
 import { Slot, SplashScreen } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
-import { supabase } from '../lib/supabase';
 
+// Prevent the native splash from hiding before we have a chance to control it.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  // ---------------------------------------------------------------
+  // 1. Hide the native splash immediately after mount
+  // ---------------------------------------------------------------
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsLoading(false);
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    // This effect runs right after the component appears on screen.
+    // At this point JavaScript is fully loaded and React is ready.
+    // Hide the native splash so the user can see our custom loading screen (index.tsx).
+    SplashScreen.hideAsync();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      SplashScreen.hideAsync();
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    console.log("SESSION:", session);
-  }, [session]);
-
-  // Wrap everything in Auth and Cart providers
+  // ---------------------------------------------------------------
+  // 2. Provide context and render the current route
+  // ---------------------------------------------------------------
   return (
     <AuthProvider>
       <CartProvider>
