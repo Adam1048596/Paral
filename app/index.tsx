@@ -69,15 +69,7 @@ export default function Index() {
   // - A spinning activity indicator (spinner) that also adapts to the theme
   // The user sees this immediately after the native splash disappears.
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        // Swap background based on dark/light mode
-        backgroundColor: isDark ? "#000" : "#fff",
-      }}
-    >
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDark ? "#000" : "#fff", }} >
       <Image
         source={
           isDark
@@ -85,12 +77,9 @@ export default function Index() {
             : require("../assets/logo/logo_icon&text_white.png")
         }
         style={{ width: 130, marginBottom: 20 }}
-        resizeMode="contain"   // Keep the image proportions
+        resizeMode="contain"
       />
-      <ActivityIndicator
-        size="large"
-        color={isDark ? "#fff" : "#000"}   // Spinner color matches text/background contrast
-      />
+      <ActivityIndicator size="large" color={isDark ? "#fff" : "#000"} />
     </View>
   );
 }

@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+
+/* Custom hook used to access the authentication context anywhere in the app.
+ * Instead of writing useContext(AuthContext) every time,  components can simply call useAuth() to get auth data and functions.  */
+export function useAuth() { return useContext(AuthContext); }
