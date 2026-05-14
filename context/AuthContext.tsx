@@ -1,22 +1,12 @@
-
-
-
-
-
-
-
 // Session contains the access token, refresh token, expiry, and the user object.
 // User holds the user’s id, email, metadata, etc.
 // We use them to type our state so we know exactly what we’re storing.
 import { Session, User } from '@supabase/supabase-js';
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-type AuthContextType = {
-  session: Session | null;
-  user: User | null;
-  isLoading: boolean;      // <-- new: tells us when the first check is done
-};
+type AuthContextType = { session: Session | null; user: User | null; isLoading: boolean; };
 
 const AuthContext = createContext<AuthContextType>({
   session: null,

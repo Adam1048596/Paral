@@ -47,7 +47,7 @@ export default function Index() {
   // It waits until the initial session check is finished (isLoading === false),
   // then decides where to send the user based on the session.
   useEffect(() => {
-    // Only navigate when the first session check is complete
+    // Only navigate when the session check is complete
     if (!isLoading) {
       if (session) {
         // A valid session exists → user is authenticated
@@ -56,10 +56,11 @@ export default function Index() {
         router.replace("/(tabs)");
       } else {
         // No session found → user needs to sign in
-        router.replace("/(auth)/sign-in");
+        router.replace("/(auth)/sign-up");
       }
     }
   }, [isLoading, session]);   // Dependencies: re‑run if loading state or session changes
+
 
   // --------------------------------------------------------------------------
   // 4. Render the loading UI
@@ -69,12 +70,12 @@ export default function Index() {
   // - A spinning activity indicator (spinner) that also adapts to the theme
   // The user sees this immediately after the native splash disappears.
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDark ? "#000" : "#fff", }} >
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDark ? "#000" : "#00fea4", }} >
       <Image
         source={
           isDark
             ? require("../assets/logo/logo_icon&text_dark.png")
-            : require("../assets/logo/logo_icon&text_white.png")
+            : require("../assets/logo/logo_icon&text.png")
         }
         style={{ width: 130, marginBottom: 20 }}
         resizeMode="contain"
