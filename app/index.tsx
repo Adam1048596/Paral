@@ -56,7 +56,7 @@ export default function Index() {
         router.replace("/(tabs)");
       } else {
         // No session found → user needs to sign in
-        router.replace("/(auth)/sign-up");
+        router.replace("/(auth)/onboarding/welcome");
       }
     }
   }, [isLoading, session]);   // Dependencies: re‑run if loading state or session changes

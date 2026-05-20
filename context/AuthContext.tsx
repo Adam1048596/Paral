@@ -1,3 +1,5 @@
+// global auth state manager
+
 // Session contains the access token, refresh token, expiry, and the user object.
 // User holds the user’s id, email, metadata, etc.
 // We use them to type our state so we know exactly what we’re storing.
@@ -6,13 +8,11 @@ import { Session, User } from '@supabase/supabase-js';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
+
 type AuthContextType = { session: Session | null; user: User | null; isLoading: boolean; };
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  isLoading: true,
-});
+const AuthContext = createContext<AuthContextType>({ session: null, user: null, isLoading: true });
+
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

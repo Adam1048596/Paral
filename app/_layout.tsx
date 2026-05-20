@@ -3,7 +3,7 @@
  *
  * Responsibilities:
  *  - Prevent the native splash from hiding automatically
- *  - Hide the native splash as soon as this component mounts (fast!)
+ *  - Hide the native splash as soon as this component mounts
  *  - Provide Auth and Cart contexts to all screens
  *  - Render the current route via <Slot />
  */
