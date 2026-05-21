@@ -9,6 +9,7 @@ export default function OnboardingLayout() {
         <Stack.Screen name="age" />
         <Stack.Screen name="gender" />
         <Stack.Screen name="contact" />
+        <Stack.Screen name="password" />
         <Stack.Screen name="verification" />
       </Stack>
     </OnboardingProvider>
