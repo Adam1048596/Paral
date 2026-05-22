@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
 import { supabase } from '../../../lib/supabase';
 
 type Profile = {
@@ -13,6 +14,7 @@ type Profile = {
 };
 
 export default function AccountScreen() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availablePoints, setAvailablePoints] = useState(0);
   const [pendingPoints, setPendingPoints] = useState(0);
@@ -90,14 +92,14 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Profile Header – tappable for settings */}
-        <TouchableOpacity
-          style={styles.profileSection}
-          onPress={() => router.push('/(tabs)/account/settings')}>
-          {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-          ) : (
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Header – if anonymous, it becomes a warning banner */}
+        {user?.is_anonymous ? (
+          <View style={styles.anonymousProfileSection}>
             <View style={styles.avatarPlaceholder}>
               <Text style={styles.avatarText}>
                 {profile?.full_name?.charAt(0) ||
@@ -105,15 +107,46 @@ export default function AccountScreen() {
                   'U'}
               </Text>
             </View>
-          )}
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
-              {profile?.full_name || 'User'}
-            </Text>
-            <Text style={styles.profileEmail}>{profile?.email}</Text>
+            <View style={styles.profileInfo}>
+              <Text style={[styles.profileName, { color: '#FFFFFF' }]}>
+                Guest Account
+              </Text>
+              <Text style={[styles.profileEmail, { color: '#FFD7D7' }]}>
+                Sign up to keep your data, points, and orders safe.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.completeAccountButton}
+              onPress={() => router.push('/(auth)/onboarding/age?convert=true')}
+            >
+              <Text style={styles.completeAccountText}>Complete your account</Text>
+            </TouchableOpacity>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#B0B8C1" />
-        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.profileSection}
+            onPress={() => router.push('/(tabs)/account/settings')}
+          >
+            {profile?.avatar_url ? (
+              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {profile?.full_name?.charAt(0) ||
+                    profile?.email?.charAt(0).toUpperCase() ||
+                    'U'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>
+                {profile?.full_name || 'User'}
+              </Text>
+              <Text style={styles.profileEmail}>{profile?.email}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#B0B8C1" />
+          </TouchableOpacity>
+        )}
 
         {/* Glow Points Card */}
         <View style={styles.pointsCard}>
@@ -125,7 +158,8 @@ export default function AccountScreen() {
           )}
           <TouchableOpacity
             style={styles.historyButton}
-            onPress={() => router.push('/(tabs)/account/loyalty-history')}>
+            onPress={() => router.push('/(tabs)/account/loyalty-history')}
+          >
             <Text style={styles.historyButtonText}>View Points History →</Text>
           </TouchableOpacity>
         </View>
@@ -169,12 +203,11 @@ export default function AccountScreen() {
           <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Simple inline menu item component
 function MenuItem({
   icon,
   label,
@@ -201,9 +234,10 @@ function MenuItem({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 24 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
 
-  // Profile
+  // --- Normal profile section ---
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,6 +246,18 @@ const styles = StyleSheet.create({
     borderColor: '#F0F0F0',
     marginBottom: 20,
   },
+
+  // --- Anonymous profile section (red warning) ---
+  anonymousProfileSection: {
+    backgroundColor: '#D92D20',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+
   avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12 },
   avatarPlaceholder: {
     width: 56,
@@ -226,6 +272,20 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1 },
   profileName: { fontSize: 18, fontWeight: '600', color: '#0F1419' },
   profileEmail: { fontSize: 14, color: '#536471', marginTop: 2 },
+  completeAccountButton: {
+    marginTop: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  completeAccountText: {
+    color: '#D92D20',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 
   // Points card
   pointsCard: {
