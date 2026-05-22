@@ -9,8 +9,8 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../../../context/AuthContext';
+import { supabase } from '../../../lib/supabase';
 
 type RewardItem = {
   id: string;
