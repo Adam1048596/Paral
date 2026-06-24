@@ -1,7 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
 import { supabase } from '../../../lib/supabase';
 
@@ -34,7 +44,6 @@ export default function AccountScreen() {
       return;
     }
 
-    // Profile
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
@@ -51,7 +60,6 @@ export default function AccountScreen() {
       }
     );
 
-    // Glow Points
     try {
       const { data: pointsData } = await supabase
         .from('user_points')
@@ -95,11 +103,14 @@ export default function AccountScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Profile Header – if anonymous, it becomes a warning banner */}
-        {user?.is_anonymous ? (
-          <View style={styles.anonymousProfileSection}>
+        showsVerticalScrollIndicator={false}>
+        {/* Profile Header – always visible */}
+        <TouchableOpacity
+          style={styles.profileSection}
+          onPress={() => router.push('/(tabs)/account/settings')}>
+          {profile?.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+          ) : (
             <View style={styles.avatarPlaceholder}>
               <Text style={styles.avatarText}>
                 {profile?.full_name?.charAt(0) ||
@@ -107,46 +118,15 @@ export default function AccountScreen() {
                   'U'}
               </Text>
             </View>
-            <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: '#FFFFFF' }]}>
-                Guest Account
-              </Text>
-              <Text style={[styles.profileEmail, { color: '#FFD7D7' }]}>
-                Sign up to keep your data, points, and orders safe.
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.completeAccountButton}
-              onPress={() => router.push('/(auth)/onboarding/age?convert=true')}
-            >
-              <Text style={styles.completeAccountText}>Complete your account</Text>
-            </TouchableOpacity>
+          )}
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>
+              {profile?.full_name || 'User'}
+            </Text>
+            <Text style={styles.profileEmail}>{profile?.email}</Text>
           </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.profileSection}
-            onPress={() => router.push('/(tabs)/account/settings')}
-          >
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>
-                  {profile?.full_name?.charAt(0) ||
-                    profile?.email?.charAt(0).toUpperCase() ||
-                    'U'}
-                </Text>
-              </View>
-            )}
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {profile?.full_name || 'User'}
-              </Text>
-              <Text style={styles.profileEmail}>{profile?.email}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#B0B8C1" />
-          </TouchableOpacity>
-        )}
+          <Ionicons name="chevron-forward" size={20} color="#B0B8C1" />
+        </TouchableOpacity>
 
         {/* Glow Points Card */}
         <View style={styles.pointsCard}>
@@ -158,8 +138,7 @@ export default function AccountScreen() {
           )}
           <TouchableOpacity
             style={styles.historyButton}
-            onPress={() => router.push('/(tabs)/account/loyalty-history')}
-          >
+            onPress={() => router.push('/(tabs)/account/loyalty-history')}>
             <Text style={styles.historyButtonText}>View Points History →</Text>
           </TouchableOpacity>
         </View>
@@ -237,7 +216,7 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
 
-  // --- Normal profile section ---
+  // Profile
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -246,18 +225,6 @@ const styles = StyleSheet.create({
     borderColor: '#F0F0F0',
     marginBottom: 20,
   },
-
-  // --- Anonymous profile section (red warning) ---
-  anonymousProfileSection: {
-    backgroundColor: '#D92D20',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-
   avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12 },
   avatarPlaceholder: {
     width: 56,
@@ -272,22 +239,8 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1 },
   profileName: { fontSize: 18, fontWeight: '600', color: '#0F1419' },
   profileEmail: { fontSize: 14, color: '#536471', marginTop: 2 },
-  completeAccountButton: {
-    marginTop: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  completeAccountText: {
-    color: '#D92D20',
-    fontWeight: '600',
-    fontSize: 14,
-  },
 
-  // Points card
+  // Points
   pointsCard: {
     backgroundColor: '#F7F9F9',
     borderRadius: 16,

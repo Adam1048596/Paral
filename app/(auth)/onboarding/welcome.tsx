@@ -1,34 +1,18 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Alert, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useAuth } from '../../../context/AuthContext';
 import { useOnboarding } from '../../../context/OnboardingContext';
-import { supabase } from '../../../lib/supabase';
 
 export default function WelcomeScreen() {
-  const { session } = useAuth();
   const { setContactType } = useOnboarding();
-  const [guestLoading, setGuestLoading] = useState(false);
-
-  useEffect(() => {
-    if (session) router.replace('/(tabs)');
-  }, [session]);
-
-  async function signInAnonymously() {
-    setGuestLoading(true);
-    const { error } = await supabase.auth.signInAnonymously();
-    if (error) Alert.alert('Could not continue as guest', error.message);
-    setGuestLoading(false);
-  }
 
   const showComingSoon = (provider: string) => {
     Alert.alert('Coming soon', `${provider} sign‑up will be available soon.`);
   };
 
-  // Navigate to Age screen – always use email
-  const goToAge = () => {
+  // Navigate to FullName screen – always use email
+  const goToFullName = () => {
     setContactType('email');
-    router.push('/(auth)/onboarding/age');
+    router.push('/(auth)/onboarding/fullname');
   };
 
   return (
@@ -82,7 +66,7 @@ export default function WelcomeScreen() {
           {/* Email sign‑up icon – starts the email onboarding */}
           <TouchableOpacity
             style={styles.socialIconButton}
-            onPress={goToAge}>
+            onPress={goToFullName}>
             <Image
               source={require('../../../assets/icons/mail-inbox.png')}
               style={styles.socialIcon}
@@ -98,14 +82,11 @@ export default function WelcomeScreen() {
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Continue as Guest – main action */}
+        {/* Create account button */}
         <TouchableOpacity
           style={[styles.button, styles.primaryButton]}
-          onPress={signInAnonymously}
-          disabled={guestLoading}>
-          <Text style={styles.primaryButtonText}>
-            {guestLoading ? 'Loading...' : 'Continue as Guest'}
-          </Text>
+          onPress={goToFullName}>
+          <Text style={styles.primaryButtonText}>Create account</Text>
         </TouchableOpacity>
 
         <Text style={styles.terms}>
@@ -138,8 +119,10 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
   terms: { fontSize: 12, color: '#536471', textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 16 },
   socialRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 8 },
-  socialIconButton: { width: 50, height: 50, borderRadius: 25, borderWidth: 1, borderColor: '#eaeaea',
-    justifyContent: 'center', alignItems: 'center', marginHorizontal: 10, },
+  socialIconButton: {
+    width: 50, height: 50, borderRadius: 25, borderWidth: 1, borderColor: '#eaeaea',
+    justifyContent: 'center', alignItems: 'center', marginHorizontal: 10, backgroundColor: '#FFFFFF',
+  },
   socialIcon: { width: 20, height: 20 },
   divider: { flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#e0e0e0' },

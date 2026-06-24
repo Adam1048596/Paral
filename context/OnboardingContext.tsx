@@ -5,6 +5,8 @@ type OnboardingData = {
   setAge: (age: number) => void;
   gender: string | null;
   setGender: (gender: string) => void;
+  fullName: string;
+  setFullName: (name: string) => void;
   contactType: 'email' | 'phone' | null;
   setContactType: (type: 'email' | 'phone') => void;
   contact: string;
@@ -20,6 +22,7 @@ const OnboardingContext = createContext<OnboardingData | undefined>(undefined);
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [age, setAgeState] = useState<number | null>(null);
   const [gender, setGenderState] = useState<string | null>(null);
+  const [fullName, setFullNameState] = useState('');
   const [contactType, setContactTypeState] = useState<'email' | 'phone' | null>('email');
   const [contact, setContactState] = useState('');
   const [password, setPasswordState] = useState('');
@@ -27,6 +30,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const setAge = (age: number) => setAgeState(age);
   const setGender = (gender: string) => setGenderState(gender);
+  const setFullName = (name: string) => setFullNameState(name);
   const setContactType = (type: 'email' | 'phone') => setContactTypeState(type);
   const setContact = (contact: string) => setContactState(contact);
   const setPassword = (password: string) => setPasswordState(password);
@@ -37,6 +41,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       value={{
         age, setAge,
         gender, setGender,
+        fullName, setFullName,
         contactType, setContactType,
         contact, setContact,
         password, setPassword,
