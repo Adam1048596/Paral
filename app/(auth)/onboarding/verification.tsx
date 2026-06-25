@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,42 +11,42 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
 import { useOnboarding } from '../../../context/OnboardingContext';
 import { supabase } from '../../../lib/supabase';
 
 export default function VerificationScreen() {
   const { contact, age, gender, password, fullName } = useOnboarding();
+  const { session } = useAuth();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function saveDemographics(userId: string) {
-    console.log('saveDemographics – userId:', userId);
-    console.log('age:', age, 'gender:', gender, 'fullName:', fullName);
-
-    const updates: Record<string, any> = {};
-    if (age !== null && age !== undefined) updates.age = age;
-    if (gender) updates.gender = gender;
-    if (fullName) {
-      updates.full_name = fullName;
-      updates.username = fullName;
-    } else {
-      console.log('WARNING: fullName is empty or undefined!');
+  // This effect runs when the session appears (normal sign‑up).
+  // It uses the current fullName from the render cycle.
+  useEffect(() => {
+    if (session) {
+      finaliseAccount(fullName);
     }
+  }, [session, fullName]);   // depend on fullName to capture latest
 
-    if (Object.keys(updates).length === 0) {
-      console.log('No updates to save');
-      return;
+  async function finaliseAccount(currentFullName: string | undefined) {
+    if (password) {
+      await supabase.auth.updateUser({ password });
     }
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: userId, ...updates });
-
-    if (error) {
-      console.error('Failed to save demographics:', error.message);
-    } else {
-      console.log('Demographics saved successfully');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const updates: Record<string, any> = {};
+      if (age !== null && age !== undefined) updates.age = age;
+      if (gender) updates.gender = gender;
+      if (currentFullName) {
+        updates.full_name = currentFullName;
+        updates.username = currentFullName;
+      }
+      console.log('Saving demographics:', updates);
+      const { error } = await supabase.from('profiles').upsert({ id: user.id, ...updates });
+      if (error) console.error('Save failed:', error.message);
     }
+    router.replace('/(tabs)');
   }
 
   const handleVerify = async () => {
@@ -57,37 +57,21 @@ export default function VerificationScreen() {
     }
 
     setLoading(true);
-
-    // 1. Verify the OTP
-    const { error: verifyError } = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.verifyOtp({
       email: contact,
       token,
       type: 'email',
     });
 
-    if (verifyError) {
+    if (error) {
       setLoading(false);
-      Alert.alert('Verification failed', verifyError.message);
+      Alert.alert('Verification failed', error.message);
       return;
     }
 
-    // 2. Set the password (the user is now logged in)
-    if (password) {
-      const { error: pwError } = await supabase.auth.updateUser({ password });
-      if (pwError) console.error('Password update failed:', pwError.message);
-    }
-
-    // 3. Get the authenticated user and save demographics
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      console.log('User after OTP verification:', user);
-      await saveDemographics(user.id);
-    } else {
-      console.log('ERROR: No user found after verification');
-    }
-
+    // Use the latest fullName from the context (captured in this render)
+    await finaliseAccount(fullName);
     setLoading(false);
-    router.replace('/(tabs)');
   };
 
   return (

@@ -1,7 +1,16 @@
-import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, RefreshControl, Text, TouchableOpacity, View, } from "react-native";
-import { supabase } from "../../lib/supabase";
+import { router } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { supabase } from '../../lib/supabase';
 
 type Product = {
   id: string;
@@ -19,21 +28,19 @@ export default function HomeScreen() {
 
   const fetchProducts = useCallback(async () => {
     const { data, error } = await supabase
-      .from("products")
-      .select(
-        `
+      .from('products')
+      .select(`
         id,
         name,
         category,
         capacity,
         image_main,
         brand:brands(name)
-      `,
-      )
+      `)
       .limit(20);
 
     if (error) {
-      console.error("Error fetching products:", error);
+      console.error('Error fetching products:', error);
     } else {
       setProducts(data || []);
     }
@@ -52,99 +59,148 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#73b504" />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
+    <View style={styles.container}>
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 12 }}
+        contentContainerStyle={styles.listContent}
         numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#73b504"
+            colors={['#73b504']}
+          />
         }
         renderItem={({ item }) => (
           <TouchableOpacity
+            style={styles.productCard}
+            activeOpacity={0.9}
             onPress={() =>
               router.push({
-                pathname: "/product/[id]",
+                pathname: '/product/[id]',
                 params: { id: item.id },
               })
-            }
-            style={{
-              flex: 1,
-              backgroundColor: "#fff",
-              margin: 6,
-              borderRadius: 12,
-              overflow: "hidden",
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 5,
-              elevation: 2,
-            }}
-          >
+            }>
             {/* Product Image */}
-            <View style={{ aspectRatio: 1, backgroundColor: "#f0f0f0" }}>
+            <View style={styles.imageContainer}>
               {item.image_main ? (
                 <Image
                   source={{ uri: item.image_main }}
-                  style={{ width: "100%", height: "100%" }}
+                  style={styles.image}
                   resizeMode="cover"
                 />
               ) : (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    backgroundColor: "#e1e1e1",
-                  }}
-                >
-                  <Text style={{ color: "#999", fontSize: 14 }}>No Image</Text>
+                <View style={styles.noImage}>
+                  <Text style={styles.noImageText}>No Image</Text>
                 </View>
               )}
             </View>
 
             {/* Product Info */}
-            <View style={{ padding: 12 }}>
-              <Text
-                style={{ fontWeight: "600", fontSize: 14, marginBottom: 4 }}
-                numberOfLines={2}
-              >
+            <View style={styles.productInfo}>
+              <Text style={styles.productName} numberOfLines={2}>
                 {item.name}
               </Text>
-              <Text style={{ color: "#888", fontSize: 12 }}>
-                {item.brand?.name || "Unknown brand"}
+              <Text style={styles.brandName}>
+                {item.brand?.name || 'Unknown brand'}
               </Text>
-              <Text style={{ color: "#aaa", fontSize: 11, marginTop: 2 }}>
-                {item.category} {item.capacity ? `· ${item.capacity}` : ""}
+              <Text style={styles.details}>
+                {item.category}
+                {item.capacity ? ` · ${item.capacity}` : ''}
               </Text>
             </View>
           </TouchableOpacity>
         )}
+        ListEmptyComponent={
+          <View style={styles.centered}>
+            <Text style={styles.emptyText}>No products available</Text>
+          </View>
+        }
       />
     </View>
   );
 }
 
-// If you’re storing only a relative path (e.g., product/cleanser/main.png), you’ll need to prefix it with your Supabase storage URL when displaying. You can do that by creating a helper:
-// lib/storage.ts
-// import { supabase } from './supabase';
-
-// export function getPublicImageUrl(path: string | null): string | null {
-//   if (!path) return null;
-//   // If already full URL, return as is
-//   if (path.startsWith('http')) return path;
-
-//   const { data } = supabase
-//     .storage
-//     .from('product')
-//     .getPublicUrl(path);
-
-//   return data.publicUrl;
-// }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listContent: {
+    padding: 12,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+  },
+  productCard: {
+    flex: 0.48,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  imageContainer: {
+    aspectRatio: 1,
+    backgroundColor: '#F7F9F9',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  noImage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+  },
+  noImageText: {
+    color: '#B0B8C1',
+    fontSize: 14,
+  },
+  productInfo: {
+    padding: 12,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0F1419',
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  brandName: {
+    fontSize: 12,
+    color: '#536471',
+    marginBottom: 2,
+  },
+  details: {
+    fontSize: 11,
+    color: '#B0B8C1',
+    marginTop: 2,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#536471',
+  },
+});
