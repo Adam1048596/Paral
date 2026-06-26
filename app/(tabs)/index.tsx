@@ -12,11 +12,15 @@ import {
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
+// ── Updated type with joined relations ──────────────────────────
 type Product = {
   id: string;
   name: string;
   brand: { name: string } | null;
-  category: string;
+  department: { name: string } | null;   // normalized
+  category: { name: string } | null;     // normalized
+  area: { name: string } | null;         // normalized
+  texture: { name: string } | null;      // normalized
   capacity: string;
   image_main: string | null;
 };
@@ -32,10 +36,13 @@ export default function HomeScreen() {
       .select(`
         id,
         name,
-        category,
         capacity,
         image_main,
-        brand:brands(name)
+        brand:brands(name),
+        department:departments(name),
+        category:categories(name),
+        area:areas(name),
+        texture:textures(name)
       `)
       .limit(20);
 
@@ -91,7 +98,6 @@ export default function HomeScreen() {
                 params: { id: item.id },
               })
             }>
-            {/* Product Image */}
             <View style={styles.imageContainer}>
               {item.image_main ? (
                 <Image
@@ -106,7 +112,6 @@ export default function HomeScreen() {
               )}
             </View>
 
-            {/* Product Info */}
             <View style={styles.productInfo}>
               <Text style={styles.productName} numberOfLines={2}>
                 {item.name}
@@ -115,7 +120,7 @@ export default function HomeScreen() {
                 {item.brand?.name || 'Unknown brand'}
               </Text>
               <Text style={styles.details}>
-                {item.category}
+                {item.category?.name || ''}
                 {item.capacity ? ` · ${item.capacity}` : ''}
               </Text>
             </View>
@@ -132,21 +137,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  listContent: {
-    padding: 12,
-  },
-  columnWrapper: {
-    justifyContent: 'space-between',
-  },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  listContent: { padding: 12 },
+  columnWrapper: { justifyContent: 'space-between' },
   productCard: {
     flex: 0.48,
     backgroundColor: '#FFFFFF',
@@ -161,27 +155,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  imageContainer: {
-    aspectRatio: 1,
-    backgroundColor: '#F7F9F9',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  noImage: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-  },
-  noImageText: {
-    color: '#B0B8C1',
-    fontSize: 14,
-  },
-  productInfo: {
-    padding: 12,
-  },
+  imageContainer: { aspectRatio: 1, backgroundColor: '#F7F9F9' },
+  image: { width: '100%', height: '100%' },
+  noImage: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F0F0' },
+  noImageText: { color: '#B0B8C1', fontSize: 14 },
+  productInfo: { padding: 12 },
   productName: {
     fontSize: 14,
     fontWeight: '600',
@@ -189,18 +167,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 18,
   },
-  brandName: {
-    fontSize: 12,
-    color: '#536471',
-    marginBottom: 2,
-  },
-  details: {
-    fontSize: 11,
-    color: '#B0B8C1',
-    marginTop: 2,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#536471',
-  },
+  brandName: { fontSize: 12, color: '#536471', marginBottom: 2 },
+  details: { fontSize: 11, color: '#B0B8C1', marginTop: 2 },
+  emptyText: { fontSize: 16, color: '#536471' },
 });

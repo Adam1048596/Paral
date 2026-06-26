@@ -6,6 +6,8 @@ type CartItem = {
   id: string;
   product_id: string;
   quantity: number;
+  is_free: boolean;
+  reward_redemption_id?: string | null;
   product: {
     name: string;
     image_main: string | null;
@@ -31,68 +33,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log("CartProvider user:", user);
     if (!user) {
       setCartId(null);
       setItems([]);
       return;
     }
-
     const initCart = async () => {
-      // Try to get existing cart
-      const { data: cart, error } = await supabase
+      let { data: cart } = await supabase
         .from('carts')
         .select('id')
         .eq('user_id', user.id)
-        .maybeSingle();   // maybeSingle returns null instead of error if not found
+        .maybeSingle();
 
-      console.log("initCart: fetched cart:", cart, "error:", error);
-
-      if (error) {
-        console.error("Error fetching cart:", error);
-        return;
-      }
-
-      let currentCart = cart;
-      if (!currentCart) {
-        console.log("No cart found, creating one...");
-        const { data: newCart, error: insertError } = await supabase
+      if (!cart) {
+        const { data: newCart } = await supabase
           .from('carts')
           .insert({ user_id: user.id })
           .select('id')
           .single();
-
-        console.log("insert cart result:", newCart, "error:", insertError);
-
-        if (insertError) {
-          console.error("Error creating cart:", insertError);
-          return;
-        }
-        currentCart = newCart;
+        cart = newCart;
       }
 
-      if (currentCart?.id) {
-        setCartId(currentCart.id);
-        await refreshCartItems(currentCart.id);
-      }
+      setCartId(cart?.id || null);
+      if (cart?.id) await refreshCartItems(cart.id);
     };
-
     initCart();
   }, [user]);
 
   const refreshCartItems = async (cart_uuid: string) => {
-    console.log("refreshCartItems for cart:", cart_uuid);
     const { data, error } = await supabase
       .from('cart_items')
       .select(`
-        id, product_id, quantity,
+        id, product_id, quantity, is_free, reward_redemption_id,
         product:products(name, image_main, price)
       `)
       .eq('cart_id', cart_uuid);
 
-    console.log("cart items:", data, "error:", error);
     if (error) {
-      console.error("Error fetching cart items:", error);
+      console.error('Error fetching cart items:', error);
       return;
     }
     setItems(data || []);
@@ -103,23 +81,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const addItem = async (productId: string, quantity = 1) => {
-    console.log("addItem called. cartId:", cartId, "productId:", productId);
-    if (!cartId) {
-      console.log("cartId is null → exiting");
-      return;
-    }
-    const existing = items.find((i) => i.product_id === productId);
+    if (!cartId) return;
+    const existing = items.find(
+      (i) => i.product_id === productId && !i.is_free
+    );
     if (existing) {
-      const { error } = await supabase
+      await supabase
         .from('cart_items')
         .update({ quantity: existing.quantity + quantity })
         .eq('id', existing.id);
-      console.log("update existing item error:", error);
     } else {
-      const { error } = await supabase
+      await supabase
         .from('cart_items')
-        .insert({ cart_id: cartId, product_id: productId, quantity });
-      console.log("insert new item error:", error);
+        .insert({ cart_id: cartId, product_id: productId, quantity, is_free: false });
     }
     await refreshCart();
   };

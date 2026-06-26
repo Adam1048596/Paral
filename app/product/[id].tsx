@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 const { width } = Dimensions.get('window');
 const IMAGE_HEIGHT = width * 0.8;
 
+// ── Types – nested objects (like brand) ───────────────────────────
 type ProductImage = {
   id: string;
   image_path: string;
@@ -28,10 +29,10 @@ type ProductDetails = {
 type ProductDetail = {
   id: string;
   name: string;
-  department: string;
-  area: string;
-  category: string;
-  texture: string;
+  department: { name: string } | null;   // joined departments
+  area: { name: string } | null;         // joined areas
+  category: { name: string } | null;     // joined categories
+  texture: { name: string } | null;      // joined textures
   capacity: string;
   image_main: string | null;
   brand: { name: string } | null;
@@ -65,12 +66,20 @@ export default function ProductScreen() {
     }
   }, [id, user]);
 
+  // ── fetch with nested joins (same pattern as brand) ─────────────
   async function fetchProduct(productId: string) {
     const { data, error } = await supabase
       .from('products')
       .select(`
-        *,
+        id,
+        name,
+        capacity,
+        image_main,
         brand:brands(name),
+        department:departments(name),
+        area:areas(name),
+        category:categories(name),
+        texture:textures(name),
         product_functions(function_id, functions(name)),
         product_ingredients(ingredient_id, ingredients(name)),
         product_skin_types(skin_type_id, skin_types(name)),
@@ -145,7 +154,7 @@ export default function ProductScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* Header with back button */}
+      {/* Header */}
       <View
         style={{
           paddingHorizontal: 16,
@@ -232,34 +241,36 @@ export default function ProductScreen() {
             {product.brand?.name || 'Unknown brand'}
           </Text>
 
+          {/* Quick Details – now displays the joined names */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 }}>
-            {product.department && (
+            {product.department?.name ? (
               <View style={{ backgroundColor: '#eef2f7', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
-                <Text style={{ textTransform: 'capitalize' }}>{product.department}</Text>
+                <Text style={{ textTransform: 'capitalize' }}>{product.department.name}</Text>
               </View>
-            )}
-            {product.area && (
+            ) : null}
+            {product.area?.name ? (
               <View style={{ backgroundColor: '#eef2f7', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
-                <Text style={{ textTransform: 'capitalize' }}>{product.area}</Text>
+                <Text style={{ textTransform: 'capitalize' }}>{product.area.name}</Text>
               </View>
-            )}
-            {product.category && (
+            ) : null}
+            {product.category?.name ? (
               <View style={{ backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
-                <Text>{product.category}</Text>
+                <Text>{product.category.name}</Text>
               </View>
-            )}
-            {product.texture && (
+            ) : null}
+            {product.texture?.name ? (
               <View style={{ backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
-                <Text>{product.texture}</Text>
+                <Text>{product.texture.name}</Text>
               </View>
-            )}
-            {product.capacity && (
+            ) : null}
+            {product.capacity ? (
               <View style={{ backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
                 <Text>{product.capacity}</Text>
               </View>
-            )}
+            ) : null}
           </View>
 
+          {/* Functions (blue pills) */}
           {product.product_functions.length > 0 && (
             <View style={{ marginTop: 20 }}>
               <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>What it does</Text>
@@ -273,6 +284,7 @@ export default function ProductScreen() {
             </View>
           )}
 
+          {/* Ingredients (grey pills) */}
           {product.product_ingredients.length > 0 && (
             <View style={{ marginTop: 20 }}>
               <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 8 }}>Key Ingredients</Text>
@@ -286,6 +298,7 @@ export default function ProductScreen() {
             </View>
           )}
 
+          {/* Detailed Education (product_details) */}
           {product.product_details?.what_it_does && (
             <View style={{ marginTop: 20 }}>
               <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 6 }}>Description</Text>
@@ -323,7 +336,7 @@ export default function ProductScreen() {
             </View>
           )}
 
-          {/* ========== CUSTOMER REVIEWS ========== */}
+          {/* Customer Reviews */}
           <View style={{ borderTopWidth: 1, borderColor: '#eee', paddingTop: 20, marginTop: 10 }}>
             <Text style={{ fontWeight: '600', fontSize: 16, marginBottom: 12 }}>Customer Reviews</Text>
             <ReviewsSection productId={product.id} />
