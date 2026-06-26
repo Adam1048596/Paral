@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs, usePathname } from 'expo-router';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useCart } from '../../context/CartContext';
 
 export default function TabsLayout() {
@@ -16,7 +16,7 @@ export default function TabsLayout() {
       case 'search':
         return { active: 'search', inactive: 'search-outline' };
       case 'cart':
-        return { active: 'cart', inactive: 'cart-outline' };
+        return { active: 'bag-handle', inactive: 'bag-handle-outline' };
       case 'account':
         return { active: 'person', inactive: 'person-outline' };
       default:
@@ -31,15 +31,11 @@ export default function TabsLayout() {
         // Outer container that positions the capsule above the home indicator
         <View style={styles.floatingContainer}>
           {/* Frosted glass capsule */}
-          <BlurView
-            intensity={80}
-            tint="dark"
-            style={styles.capsule}
-          >
+          <BlurView intensity={0} tint="dark" style={styles.capsule} >
+
             {props.state.routes.map((route, index) => {
               // Determine if this tab is currently active
-              const isActive = pathname === `/${route.name}` ||
-                (route.name === 'index' && pathname === '/');
+              const isActive = pathname === `/${route.name}` || (route.name === 'index' && pathname === '/');
               const { active, inactive } = getIcons(route.name);
 
               return (
@@ -52,7 +48,7 @@ export default function TabsLayout() {
                   {/* Active tab: pill with icon + label */}
                   {isActive ? (
                     <View style={styles.activePill}>
-                      <Ionicons name={active} size={20} color="#FFFFFF" />
+                      <Ionicons name={active} size={20} color="#1c7245" />
                       <Text style={styles.activeLabel}>
                         {route.name === 'index' ? 'Home' : route.name.charAt(0).toUpperCase() + route.name.slice(1)}
                       </Text>
@@ -66,7 +62,7 @@ export default function TabsLayout() {
                   ) : (
                     /* Inactive tab: icon only */
                     <View style={styles.inactiveIcon}>
-                      <Ionicons name={inactive} size={22} color="#B0B8C1" />
+                      <Ionicons name={inactive} size={22} color="#000" />
                       {/* Cart badge still shown on inactive cart tab */}
                       {route.name === 'cart' && items.length > 0 && (
                         <View style={[styles.badge, styles.inactiveBadge]}>
@@ -91,72 +87,23 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  floatingContainer: {
-    position: 'absolute',
-    bottom: 24,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  floatingContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', },
   capsule: {
-    flexDirection: 'row',
-    backgroundColor: Platform.OS === 'android' ? '#fff' : 'transparent', // fallback for Android blur
-    borderRadius: 30,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    minWidth: '75%',
-    maxWidth: '90%',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    flexDirection: 'row', backgroundColor: '#fff', paddingVertical: 10, 
+    paddingHorizontal: 8, minWidth: '100%', maxWidth: '100%',
+    overflow: 'hidden', borderWidth: 1, borderColor: '#efefef',
   },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-  },
+  tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4, },
   activePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#73b504',   // your PARAL green
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    gap: 6,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#d8fdd2',
+    borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, gap: 6,
   },
-  activeLabel: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  inactiveIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  activeLabel: { color: '#1c7245', fontSize: 14, fontWeight: '600', },
+  inactiveIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', },
   badge: {
-    position: 'absolute',
-    top: -2,
-    right: -6,
-    backgroundColor: '#FF3B30',
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
+    position: 'absolute', top: -2, right: -6, backgroundColor: '#1c7245', borderRadius: 10, minWidth: 18,
+    height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, 
   },
-  inactiveBadge: {
-    top: -4,
-    right: -8,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
+  inactiveBadge: { top: -4, right: -8, },
+  badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700', },
 });
