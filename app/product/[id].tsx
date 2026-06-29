@@ -29,10 +29,10 @@ type ProductDetails = {
 type ProductDetail = {
   id: string;
   name: string;
-  department: { name: string } | null;   // joined departments
-  area: { name: string } | null;         // joined areas
-  category: { name: string } | null;     // joined categories
-  texture: { name: string } | null;      // joined textures
+  department: { name: string } | null;
+  area: { name: string } | null;
+  category: { name: string } | null;
+  texture: { name: string } | null;
   capacity: string;
   image_main: string | null;
   brand: { name: string } | null;
@@ -75,7 +75,7 @@ export default function ProductScreen() {
         name,
         capacity,
         image_main,
-        brand:brands(name),
+        brand:brand(name),
         department:departments(name),
         area:areas(name),
         category:categories(name),

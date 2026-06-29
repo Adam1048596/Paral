@@ -8,7 +8,6 @@ export default function TabsLayout() {
   const { items } = useCart();
   const pathname = usePathname();
 
-  // Map route names to icon pairs (filled / outline)
   const getIcons = (route: string) => {
     switch (route) {
       case 'index':
@@ -107,3 +106,4 @@ const styles = StyleSheet.create({
   inactiveBadge: { top: -4, right: -8, },
   badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700', },
 });
+

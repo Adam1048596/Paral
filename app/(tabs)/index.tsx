@@ -1,26 +1,16 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
-// ── Updated type with joined relations ──────────────────────────
 type Product = {
   id: string;
   name: string;
   brand: { name: string } | null;
-  department: { name: string } | null;   // normalized
-  category: { name: string } | null;     // normalized
-  area: { name: string } | null;         // normalized
-  texture: { name: string } | null;      // normalized
+  department: { name: string } | null;
+  category: { name: string } | null;
+  area: { name: string } | null;
+  texture: { name: string } | null;
   capacity: string;
   image_main: string | null;
 };
