@@ -74,8 +74,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#73b504"
-            colors={['#73b504']}
+            tintColor="#1c7245"
+            colors={['#1c7245']}
           />
         }
         renderItem={({ item }) => (
@@ -90,11 +90,7 @@ export default function HomeScreen() {
             }>
             <View style={styles.imageContainer}>
               {item.image_main ? (
-                <Image
-                  source={{ uri: item.image_main }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: item.image_main }} style={styles.image} resizeMode="cover" />
               ) : (
                 <View style={styles.noImage}>
                   <Text style={styles.noImageText}>No Image</Text>
@@ -150,13 +146,7 @@ const styles = StyleSheet.create({
   noImage: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F0F0' },
   noImageText: { color: '#B0B8C1', fontSize: 14 },
   productInfo: { padding: 12 },
-  productName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0F1419',
-    marginBottom: 4,
-    lineHeight: 18,
-  },
+  productName: { fontSize: 14, fontWeight: '600', color: '#0F1419', marginBottom: 4, lineHeight: 18, },
   brandName: { fontSize: 12, color: '#536471', marginBottom: 2 },
   details: { fontSize: 11, color: '#B0B8C1', marginTop: 2 },
   emptyText: { fontSize: 16, color: '#536471' },

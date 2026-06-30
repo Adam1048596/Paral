@@ -360,7 +360,7 @@ export default function ProductScreen() {
                 params: { productId: product.id },
               })
             }>
-            <Text style={{ textAlign: 'center', color: '#007AFF', fontWeight: '600' }}>
+            <Text style={{ textAlign: 'center', color: '#1c7245', fontWeight: '600' }}>
               Write a Review
             </Text>
           </TouchableOpacity>
@@ -372,7 +372,7 @@ export default function ProductScreen() {
             Alert.alert('Added to cart', `${product.name} has been added to your cart.`);
           }}
           style={{
-            backgroundColor: '#007AFF',
+            backgroundColor: '#1c7245',
             padding: 16,
             borderRadius: 8,
             alignItems: 'center',

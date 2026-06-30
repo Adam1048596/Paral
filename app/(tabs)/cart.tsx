@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   browseButton: {
-    backgroundColor: '#73b504',
+    backgroundColor: '#1c7245',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 30,
