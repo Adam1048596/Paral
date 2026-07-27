@@ -1,7 +1,5 @@
-import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Keyboard, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { SearchModal } from '../../components/search/Modal';
 import { SearchBar } from '../../components/SearchBar';
 import { supabase } from '../../lib/supabase';
 
@@ -171,15 +169,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}  // Hide vertical scrollbar
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1c7245" />
-        }
-      >
+        }>
 
       <SearchBar onPress={() => setSearchVisible(true)} />
-      <SearchModal
-        visible={searchVisible}
-        onClose={() => setSearchVisible(false)}
-        onProductPress={(id) => router.push(`/product/${id}`)}
-      />
+
 
 
       </ScrollView>

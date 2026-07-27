@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { useState } from 'react';
-import { Keyboard, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
+import { Image, Keyboard, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 type Props = {
   onProductPress?: (productId: string) => void;
@@ -44,22 +44,43 @@ export const SearchBar = ({ onProductPress }: Props) => {
       <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
 
       {/* Tabs row */}
-      <View style={styles.tabsRowOuter}>
-        <View style={styles.tabsRow}>
-          {['Skincare', 'Supplements', 'Accessories'].map((cat, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={[styles.tab, idx === 0 && styles.activeTab]}>
-              <Text style={[styles.tabText, idx === 0 && styles.activeTabText]}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
-          <Ionicons name="close" size={24} color="#292d32" />
+    <View style={styles.tabsRowOuter}>
+    <View style={styles.tabsRow}>
+        {/* Skincare */}
+        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+        <Image
+            source={require('../assets/icons/skincare.png')}   // replace with your actual path
+            style={styles.tabIcon}
+            resizeMode="contain"
+        />
+        <Text style={styles.activeTabText}>Skincare</Text>
         </TouchableOpacity>
-      </View>
+
+        {/* Supplements */}
+        <TouchableOpacity style={styles.tab}>
+        <Image
+            source={require('../assets/icons/supplements.png')}
+            style={styles.tabIcon}
+            resizeMode="contain"
+        />
+        <Text style={styles.tabText}>Supplements</Text>
+        </TouchableOpacity>
+
+        {/* Accessories */}
+        <TouchableOpacity style={styles.tab}>
+        <Image
+            source={require('../assets/icons/accessories.png')}
+            style={styles.tabIcon}
+            resizeMode="contain"
+        />
+        <Text style={styles.tabText}>Accessories</Text>
+        </TouchableOpacity>
+    </View>
+
+    <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
+        <Ionicons name="close" size={24} color="#292d32" />
+    </TouchableOpacity>
+    </View>
 
       {/* White panel */}
       <View style={styles.expandedPanel}>
@@ -108,7 +129,7 @@ export const SearchBar = ({ onProductPress }: Props) => {
                   key={idx}
                   style={styles.chip}
                   onPress={() => setSearchText(cat)}>
-                  <Ionicons name="leaf-outline" size={16} color="#222" style={{ marginRight: 6 }} />
+                  <Ionicons name="leaf-outline" size={16} color="#292d32" style={{ marginRight: 6 }} />
                   <Text style={styles.chipText}>{cat}</Text>
                 </TouchableOpacity>
               ),
@@ -150,18 +171,24 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
-    paddingTop: STATUS_BAR_H + 10,
+    paddingTop: STATUS_BAR_H + 20,
   },
   tabsRowOuter: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 15,
     marginBottom: 10,
   },
   tabsRow: {
     flex: 1,
     flexDirection: 'row',
   },
+  tabIcon: {
+  width: 24,
+  height: 24,
+  marginBottom: 4,
+},
   tab: {
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -174,7 +201,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    color: '#222',
+    color: '#292d32',
   },
   activeTabText: {
     color: '#fff',
