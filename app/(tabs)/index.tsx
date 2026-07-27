@@ -1,11 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Animated, Dimensions, FlatList, Image, Keyboard, RefreshControl, ScrollView,
-  StyleSheet, Text, TextInput, TouchableOpacity, View,
+  ActivityIndicator, Animated, Dimensions,
+  Keyboard, RefreshControl, ScrollView,
+  StyleSheet,
+  TextInput,
+  View
 } from 'react-native';
+import { SearchBar } from '../../components/search/Bar';
+import { SearchModal } from '../../components/search/Modal';
 import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
@@ -170,193 +173,22 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* ==================== HOME CONTENT ==================== */}
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}  // Add css for ScrollView content
+        showsVerticalScrollIndicator={false}  // Hide vertical scrollbar
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#73b504" />
-        }>
-        {/* Sticky header is just part of scroll for now */}
-        <Text style={styles.greeting}>Good morning, beautiful ✨</Text>
-        <Text style={styles.subtitle}>Discover your perfect routine</Text>
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1c7245" />
+        }
+      >
 
-        {/* Search bar */}
-        <TouchableOpacity style={styles.searchBar} onPress={openSearch} activeOpacity={0.9}>
-          <Ionicons name="search" size={20} color="#8E8E93" />
-          <Text style={styles.searchPlaceholder}>Search products, brands, or categories...</Text>
-        </TouchableOpacity>
+      <SearchBar onPress={() => setSearchVisible(true)} />
+      <SearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+        onProductPress={(id) => router.push(`/product/${id}`)}
+      />
 
-        {/* Departments */}
-        <Text style={styles.sectionTitle}>Departments</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-          {departments.map((d) => (
-            <TouchableOpacity key={d.id} style={styles.chip}>
-              <Text style={styles.chipText}>{d.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
 
-        {/* Featured Categories */}
-        <Text style={styles.sectionTitle}>Featured Categories</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-          {categories.slice(0, 6).map((c) => (
-            <TouchableOpacity key={c.id} style={styles.catCard}>
-              <View style={styles.catIcon}>
-                <Ionicons name="leaf-outline" size={24} color="#73b504" />
-              </View>
-              <Text style={styles.catName}>{c.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Featured Brands */}
-        <Text style={styles.sectionTitle}>Featured Brands</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.brandScroll}>
-          {brands.slice(0, 6).map((b) => (
-            <View key={b.id} style={styles.brandCard}>
-              <View style={styles.brandLogo}>
-                <Ionicons name="ribbon-outline" size={28} color="#73b504" />
-              </View>
-              <Text style={styles.brandName}>{b.name}</Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Recently Added (Product Grid) */}
-        <Text style={styles.sectionTitle}>Recently Added</Text>
-        <View style={styles.productGrid}>
-          {products.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.productCard}
-              activeOpacity={0.9}
-              onPress={() => router.push({ pathname: '/product/[id]', params: { id: item.id } })}>
-              <View style={styles.imageContainer}>
-                {item.image_main ? (
-                  <Image source={{ uri: item.image_main }} style={styles.image} resizeMode="cover" />
-                ) : (
-                  <View style={styles.noImage}>
-                    <Text style={styles.noImageText}>No Image</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.productInfo}>
-                <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-                <Text style={styles.productBrand}>{item.brand?.name || 'Unknown brand'}</Text>
-                <Text style={styles.productDetails}>
-                  {item.category?.name || ''}{item.capacity ? ` · ${item.capacity}` : ''}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
       </ScrollView>
-
-      {/* ==================== SEARCH OVERLAY ==================== */}
-      {searchVisible && (
-        <Animated.View
-          style={[
-            styles.overlay,
-            { opacity: overlayOpacity, transform: [{ scale: overlayScale }] },
-          ]}>
-          <BlurView intensity={60} style={StyleSheet.absoluteFill} tint="light" />
-          <View style={styles.overlayContent}>
-            {/* Search input */}
-            <View style={styles.overlaySearchRow}>
-              <Ionicons name="search" size={20} color="#8E8E93" />
-              <TextInput
-                ref={searchInputRef}
-                style={styles.overlayInput}
-                placeholder="Search products, brands, or categories..."
-                placeholderTextColor="#8E8E93"
-                value={searchText}
-                onChangeText={handleSearch}
-                autoFocus={false}
-              />
-              <TouchableOpacity onPress={closeSearch}>
-                <Ionicons name="close-circle" size={22} color="#8E8E93" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Content based on state */}
-            {searchText.length === 0 ? (
-              <>
-                {/* Popular Categories */}
-                <Text style={styles.overlaySectionTitle}>Popular Categories</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-                  {categories.slice(0, 6).map((c) => (
-                    <TouchableOpacity key={c.id} style={styles.chip}>
-                      <Text style={styles.chipText}>{c.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-
-                {/* Recent Searches */}
-                {recentSearches.length > 0 && (
-                  <>
-                    <Text style={styles.overlaySectionTitle}>Recent Searches</Text>
-                    <View style={styles.recentRow}>
-                      {recentSearches.map((term, idx) => (
-                        <TouchableOpacity
-                          key={idx}
-                          style={styles.recentChip}
-                          onPress={() => handleSearch(term)}>
-                          <Text style={styles.recentChipText}>{term}</Text>
-                          <Ionicons
-                            name="close"
-                            size={16}
-                            color="#8E8E93"
-                            onPress={() => setRecentSearches(prev => prev.filter(t => t !== term))}
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </>
-                )}
-
-                {/* Suggested Products (empty state for now) */}
-                <Text style={styles.overlaySectionTitle}>Suggested Products</Text>
-                <View style={styles.emptySearch}>
-                  <Ionicons name="search-outline" size={48} color="#D1D5DB" />
-                  <Text style={styles.emptySearchText}>Start typing to discover products.</Text>
-                </View>
-              </>
-            ) : (
-              // Live results
-              <FlatList
-                data={searchResults}
-                keyExtractor={(item) => item.id}
-                style={{ marginTop: 8 }}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.searchResultItem}
-                    onPress={() => {
-                      closeSearch();
-                      router.push({ pathname: '/product/[id]', params: { id: item.id } });
-                    }}>
-                    <Image
-                      source={{ uri: item.image_main || 'https://via.placeholder.com/60' }}
-                      style={styles.searchResultImage}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.searchResultInfo}>
-                      <Text style={styles.searchResultName} numberOfLines={1}>{item.name}</Text>
-                      <Text style={styles.searchResultBrand}>{item.brand?.name || 'Unknown brand'}</Text>
-                      <Text style={styles.searchResultCat}>{item.category?.name}</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color="#B0B8C1" />
-                  </TouchableOpacity>
-                )}
-                ListEmptyComponent={
-                  <View style={styles.emptySearch}>
-                    <Ionicons name="search-outline" size={48} color="#D1D5DB" />
-                    <Text style={styles.emptySearchText}>No products found.</Text>
-                  </View>
-                }
-              />
-            )}
-          </View>
-        </Animated.View>
-      )}
     </View>
   );
 }
@@ -365,7 +197,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: 100 },   // space for tab bar
+  scrollContent: { paddingTop: 50, paddingBottom: 1000 },   // space for tab bar
 
   // Greeting
   greeting: { fontSize: 28, fontWeight: '700', color: '#0F1419', paddingHorizontal: 16, marginTop: 20 },
@@ -383,7 +215,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   searchPlaceholder: { flex: 1, marginLeft: 10, color: '#8E8E93', fontSize: 16 },
-
+  
   // Sections
   sectionTitle: { fontSize: 20, fontWeight: '600', color: '#0F1419', paddingHorizontal: 16, marginBottom: 12, marginTop: 8 },
 
