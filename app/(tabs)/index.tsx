@@ -1,12 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator, Animated, Dimensions,
-  Keyboard, RefreshControl, ScrollView,
-  StyleSheet,
-  TextInput,
-  View
-} from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Keyboard, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SearchBar } from '../../components/search/Bar';
 import { SearchModal } from '../../components/search/Modal';
 import { supabase } from '../../lib/supabase';
@@ -195,7 +189,7 @@ export default function HomeScreen() {
 
 // ── Styles ──────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#f3f3f3' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { paddingTop: 50, paddingBottom: 1000 },   // space for tab bar
 
