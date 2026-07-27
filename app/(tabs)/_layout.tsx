@@ -11,7 +11,7 @@ export default function TabsLayout() {
   const getIcons = (route: string) => {
     switch (route) {
       case 'index':
-        return { active: 'home', inactive: 'home-outline' };
+        return { active: 'albums', inactive: 'albums-outline' };
       case 'cart':
         return { active: 'bag', inactive: 'bag-outline' };
       case 'account':
@@ -66,54 +66,18 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  floatingContainer: {
-    position: 'absolute',
-    bottom: 15,
-    left: 70,
-    right: 70,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  floatingContainer: { position: 'absolute', bottom: 15, left: 70, right: 70, alignItems: 'center', justifyContent: 'center', },
   capsule: {
-    flexDirection: 'row',
-    backgroundColor: '#fcfbfc',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    minWidth: '100%',
-    maxWidth: '100%',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#fcfcfc',
-    borderRadius: 999,
+    flexDirection: 'row', backgroundColor: '#fcfbfc', paddingVertical: 10,
+    paddingHorizontal: 8, minWidth: '100%', maxWidth: '100%', overflow: 'hidden',
+    borderWidth: 1, borderColor: '#fcfcfc', borderRadius: 999,
   },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4, },
+  iconContainer: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', },
   badge: {
-    position: 'absolute',
-    top: -2,
-    right: -6,
-    backgroundColor: '#1c7245',
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
+    position: 'absolute', top: -2, right: -6, backgroundColor: '#1c7245',
+    borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center',
+    justifyContent: 'center', paddingHorizontal: 4,
   },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
+  badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700', },
 });

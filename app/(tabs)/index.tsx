@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Keyboard, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { SearchBar } from '../../components/search/Bar';
 import { SearchModal } from '../../components/search/Modal';
+import { SearchBar } from '../../components/SearchBar';
 import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
