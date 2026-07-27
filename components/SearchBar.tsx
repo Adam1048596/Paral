@@ -1,80 +1,34 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import React, { useRef, useState } from 'react';
-import {
-    Animated,
-    Dimensions,
-    Keyboard,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-
-const { width, height } = Dimensions.get('window');
+import React, { useState } from 'react';
+import { Keyboard, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 
 type Props = {
-  onProductPress?: (productId: string) => void;   // optional, for future use
+  onProductPress?: (productId: string) => void;
 };
+
+const STATUS_BAR_H = StatusBar.currentHeight ?? 50;
 
 export const SearchBar = ({ onProductPress }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  // Animation values
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const contentTranslateY = useRef(new Animated.Value(-20)).current;
+  const openSearch = () => setExpanded(true);
 
-  // Open the search
-  const openSearch = () => {
-    setExpanded(true);
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.spring(contentTranslateY, {
-        toValue: 0,
-        damping: 20,
-        stiffness: 120,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  // Close the search
   const closeSearch = () => {
     Keyboard.dismiss();
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(contentTranslateY, {
-        toValue: -20,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setExpanded(false);
-      setSearchText('');
-    });
+    setExpanded(false);
+    setSearchText('');
   };
 
-  // ── Collapsed pill ──────────────────────────────────────
+  // Collapsed pill
   if (!expanded) {
     return (
       <TouchableOpacity
         style={styles.collapsedPill}
-        activeOpacity={0.95}
         onPress={openSearch}>
         <View style={styles.collapsedInner}>
-          <Ionicons name="search" size={22} color="#222" />
+          <Ionicons name="search" size={16} color="#292d32" />
           <View style={styles.collapsedText}>
             <Text style={styles.placeholder}>Start your Search</Text>
           </View>
@@ -83,103 +37,94 @@ export const SearchBar = ({ onProductPress }: Props) => {
     );
   }
 
-  // ── Expanded overlay ────────────────────────────────────
+  // Expanded panel
   return (
-    <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+    <View style={styles.overlay}>
       {/* Blur background */}
       <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
 
-      {/* Slide‑in content */}
-      <Animated.View
-        style={[
-          styles.expandedContainer,
-          { transform: [{ translateY: contentTranslateY }] },
-        ]}>
-        {/* Header: category tabs + close */}
-        <View style={styles.header}>
-          <View style={styles.tabsRow}>
-            {['Skincare', 'Supplements', 'Accessories'].map((cat, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[styles.tab, idx === 0 && styles.activeTab]}>
-                <Text style={[styles.tabText, idx === 0 && styles.activeTabText]}>
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
-            <Ionicons name="close" size={24} color="#222" />
-          </TouchableOpacity>
+      {/* Tabs row */}
+      <View style={styles.tabsRowOuter}>
+        <View style={styles.tabsRow}>
+          {['Skincare', 'Supplements', 'Accessories'].map((cat, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={[styles.tab, idx === 0 && styles.activeTab]}>
+              <Text style={[styles.tabText, idx === 0 && styles.activeTabText]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
+          <Ionicons name="close" size={24} color="#292d32" />
+        </TouchableOpacity>
+      </View>
+
+      {/* White panel */}
+      <View style={styles.expandedPanel}>
+        {/* Search input */}
+        <View style={styles.inputRow}>
+          <Ionicons name="search" size={20} color="#8E8E93" />
+          <TextInput
+            style={styles.input}
+            placeholder="Search products, brands, or categories..."
+            placeholderTextColor="#8E8E93"
+            value={searchText}
+            onChangeText={setSearchText}
+            autoFocus={false}
+            returnKeyType="search"
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchText('')}>
+              <Ionicons name="close-circle" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* White rounded container */}
-        <View style={styles.whiteContainer}>
-          {/* Search input */}
-          <View style={styles.inputRow}>
-            <Ionicons name="search" size={20} color="#8E8E93" />
-            <TextInput
-              style={styles.input}
-              placeholder="Search products, brands, or categories..."
-              placeholderTextColor="#8E8E93"
-              value={searchText}
-              onChangeText={setSearchText}
-              autoFocus={false}
-              returnKeyType="search"
-            />
-            {searchText.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchText('')}>
-                <Ionicons name="close-circle" size={20} color="#8E8E93" />
+        {/* Scrollable suggestions */}
+        <ScrollView
+          style={styles.suggestionsScroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <Text style={styles.sectionTitle}>Suggested Searches</Text>
+          {['Dry Skin', 'Combination Skin', 'Oily Skin', 'Sensitive Skin'].map(
+            (item, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.suggestionItem}
+                onPress={() => setSearchText(item)}>
+                <Ionicons name="search-outline" size={18} color="#8E8E93" />
+                <Text style={styles.suggestionText}>{item}</Text>
               </TouchableOpacity>
-            )}
-          </View>
+            ),
+          )}
 
-          {/* Scrollable suggestions */}
-          <ScrollView
-            style={styles.suggestionsScroll}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled">
-            {/* Suggested searches */}
-            <Text style={styles.sectionTitle}>Suggested Searches</Text>
-            {['Dry Skin', 'Combination Skin', 'Oily Skin', 'Sensitive Skin'].map(
-              (item, idx) => (
+          <Text style={styles.sectionTitle}>Popular Categories</Text>
+          <View style={styles.chipRow}>
+            {['Serum', 'Moisturizer', 'Cleanser', 'Sunscreen', 'Toner'].map(
+              (cat, idx) => (
                 <TouchableOpacity
                   key={idx}
-                  style={styles.suggestionItem}
-                  onPress={() => setSearchText(item)}>
-                  <Ionicons name="search-outline" size={18} color="#8E8E93" />
-                  <Text style={styles.suggestionText}>{item}</Text>
+                  style={styles.chip}
+                  onPress={() => setSearchText(cat)}>
+                  <Ionicons name="leaf-outline" size={16} color="#222" style={{ marginRight: 6 }} />
+                  <Text style={styles.chipText}>{cat}</Text>
                 </TouchableOpacity>
               ),
             )}
-
-            {/* Popular categories */}
-            <Text style={styles.sectionTitle}>Popular Categories</Text>
-            <View style={styles.chipRow}>
-              {['Serum', 'Moisturizer', 'Cleanser', 'Sunscreen', 'Toner'].map(
-                (cat, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={styles.chip}
-                    onPress={() => setSearchText(cat)}>
-                    <Ionicons name="leaf-outline" size={16} color="#222" style={{ marginRight: 6 }} />
-                    <Text style={styles.chipText}>{cat}</Text>
-                  </TouchableOpacity>
-                ),
-              )}
-            </View>
-          </ScrollView>
-        </View>
-      </Animated.View>
-    </Animated.View>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // ── Collapsed Pill ─────────────────────────────────────
+  // Collapsed pill
   collapsedPill: {
     backgroundColor: '#fcfbfc',
-    borderRadius: 999,            
+    borderRadius: 999,
     paddingVertical: 18,
     paddingHorizontal: 90,
     marginHorizontal: 25,
@@ -198,25 +143,20 @@ const styles = StyleSheet.create({
   placeholder: {
     fontSize: 14,
     fontWeight: '200',
-    color: '#222',
+    color: '#292d32',
   },
-  // ── Expanded Overlay ───────────────────────────────────
+
+  // Expanded overlay
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
-    justifyContent: 'flex-start',
-    paddingTop: StatusBar.currentHeight || 50,
+    paddingTop: STATUS_BAR_H + 10,
   },
-  expandedContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-
-  // Header with category tabs & close button
-  header: {
+  tabsRowOuter: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    marginBottom: 10,
   },
   tabsRow: {
     flex: 1,
@@ -243,11 +183,11 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 8,
   },
-
-  // White rounded container
-  whiteContainer: {
+  expandedPanel: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 20,
     borderRadius: 24,
     padding: 20,
     shadowColor: '#000',
@@ -256,8 +196,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 5,
   },
-
-  // Search input row
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -273,8 +211,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0F1419',
   },
-
-  // Suggestions
   suggestionsScroll: {
     flex: 1,
   },
@@ -298,8 +234,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0F1419',
   },
-
-  // Popular categories chips
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
