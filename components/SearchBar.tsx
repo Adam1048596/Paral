@@ -1,7 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { useState } from 'react';
-import { Image, Keyboard, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Keyboard,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 type Props = {
   onProductPress?: (productId: string) => void;
@@ -9,9 +19,33 @@ type Props = {
 
 const STATUS_BAR_H = StatusBar.currentHeight ?? 50;
 
+// ---- Tab content data structure ----
+const TAB_DATA: Record<string, { suggested: string[]; categories: string[] }> = {
+  Skincare: {
+    suggested: ['Dry Skin', 'Combination Skin', 'Oily Skin', 'Sensitive Skin'],
+    categories: ['Serum', 'Moisturizer', 'Cleanser', 'Sunscreen', 'Toner'],
+  },
+  Supplements: {
+    suggested: ['Vitamin C', 'Collagen', 'Omega‑3', 'Multivitamin', 'Probiotics'],
+    categories: ['Powder', 'Capsules', 'Gummies', 'Liquids', 'Teas'],
+  },
+  Accessories: {
+    suggested: ['Facial Roller', 'Spatula', 'Headband', 'Brush', 'Cotton Pads'],
+    categories: ['Tools', 'Brushes', 'Headbands', 'Cotton', 'Bottles'],
+  },
+};
+
+// ---- Static icon mapping (fixed for Metro) ----
+const ICON_MAP: Record<string, any> = {
+  skincare: require('../assets/icons/skincare.png'),
+  supplements: require('../assets/icons/supplements.png'),
+  accessories: require('../assets/icons/accessories.png'),
+};
+
 export const SearchBar = ({ onProductPress }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [activeTab, setActiveTab] = useState('Skincare');
 
   const openSearch = () => setExpanded(true);
 
@@ -24,9 +58,7 @@ export const SearchBar = ({ onProductPress }: Props) => {
   // Collapsed pill
   if (!expanded) {
     return (
-      <TouchableOpacity
-        style={styles.collapsedPill}
-        onPress={openSearch}>
+      <TouchableOpacity style={styles.collapsedPill} onPress={openSearch}>
         <View style={styles.collapsedInner}>
           <Ionicons name="search" size={16} color="#292d32" />
           <View style={styles.collapsedText}>
@@ -37,6 +69,9 @@ export const SearchBar = ({ onProductPress }: Props) => {
     );
   }
 
+  // Get the current tab data
+  const currentTab = TAB_DATA[activeTab];
+
   // Expanded panel
   return (
     <View style={styles.overlay}>
@@ -44,43 +79,34 @@ export const SearchBar = ({ onProductPress }: Props) => {
       <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
 
       {/* Tabs row */}
-    <View style={styles.tabsRowOuter}>
-    <View style={styles.tabsRow}>
-        {/* Skincare */}
-        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-        <Image
-            source={require('../assets/icons/skincare.png')}   // replace with your actual path
-            style={styles.tabIcon}
-            resizeMode="contain"
-        />
-        <Text style={styles.activeTabText}>Skincare</Text>
-        </TouchableOpacity>
+      <View style={styles.tabsRowOuter}>
+        <View style={styles.tabsRow}>
+          {Object.keys(TAB_DATA).map((tabName) => {
+            const isActive = tabName === activeTab;
+            return (
+              <TouchableOpacity
+                key={tabName}
+                style={[styles.tab, isActive && styles.activeTab]}
+                onPress={() => setActiveTab(tabName)}>
+                {isActive && (
+                  <Image
+                    source={ICON_MAP[tabName.toLowerCase()]}
+                    style={styles.tabIcon}
+                    resizeMode="contain"
+                  />
+                )}
+                <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+                  {tabName}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-        {/* Supplements */}
-        <TouchableOpacity style={styles.tab}>
-        <Image
-            source={require('../assets/icons/supplements.png')}
-            style={styles.tabIcon}
-            resizeMode="contain"
-        />
-        <Text style={styles.tabText}>Supplements</Text>
+        <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
+          <Ionicons name="close" size={24} color="#292d32" />
         </TouchableOpacity>
-
-        {/* Accessories */}
-        <TouchableOpacity style={styles.tab}>
-        <Image
-            source={require('../assets/icons/accessories.png')}
-            style={styles.tabIcon}
-            resizeMode="contain"
-        />
-        <Text style={styles.tabText}>Accessories</Text>
-        </TouchableOpacity>
-    </View>
-
-    <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
-        <Ionicons name="close" size={24} color="#292d32" />
-    </TouchableOpacity>
-    </View>
+      </View>
 
       {/* White panel */}
       <View style={styles.expandedPanel}>
@@ -103,37 +129,38 @@ export const SearchBar = ({ onProductPress }: Props) => {
           )}
         </View>
 
-        {/* Scrollable suggestions */}
+        {/* Scrollable suggestions – dynamic per active tab */}
         <ScrollView
           style={styles.suggestionsScroll}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           <Text style={styles.sectionTitle}>Suggested Searches</Text>
-          {['Dry Skin', 'Combination Skin', 'Oily Skin', 'Sensitive Skin'].map(
-            (item, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.suggestionItem}
-                onPress={() => setSearchText(item)}>
-                <Ionicons name="search-outline" size={18} color="#8E8E93" />
-                <Text style={styles.suggestionText}>{item}</Text>
-              </TouchableOpacity>
-            ),
-          )}
+          {currentTab.suggested.map((item, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.suggestionItem}
+              onPress={() => setSearchText(item)}>
+              <Ionicons name="search-outline" size={18} color="#8E8E93" />
+              <Text style={styles.suggestionText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
 
           <Text style={styles.sectionTitle}>Popular Categories</Text>
           <View style={styles.chipRow}>
-            {['Serum', 'Moisturizer', 'Cleanser', 'Sunscreen', 'Toner'].map(
-              (cat, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.chip}
-                  onPress={() => setSearchText(cat)}>
-                  <Ionicons name="leaf-outline" size={16} color="#292d32" style={{ marginRight: 6 }} />
-                  <Text style={styles.chipText}>{cat}</Text>
-                </TouchableOpacity>
-              ),
-            )}
+            {currentTab.categories.map((cat, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.chip}
+                onPress={() => setSearchText(cat)}>
+                <Ionicons
+                  name="leaf-outline"
+                  size={16}
+                  color="#292d32"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.chipText}>{cat}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </ScrollView>
       </View>
@@ -185,10 +212,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tabIcon: {
-  width: 24,
-  height: 24,
-  marginBottom: 4,
-},
+    width: 24,
+    height: 24,
+    marginBottom: 4,
+  },
   tab: {
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -200,7 +227,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1c7245',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#292d32',
   },
   activeTabText: {
@@ -213,14 +240,10 @@ const styles = StyleSheet.create({
   expandedPanel: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     marginBottom: 20,
     borderRadius: 24,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
     elevation: 5,
   },
   inputRow: {

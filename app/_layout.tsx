@@ -7,16 +7,22 @@
  *  - Provide Auth and Cart contexts to all screens
  *  - Render the current route via <Slot />
  */
-
+import { useFonts } from 'expo-font';
 import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 
+
 // Prevent the native splash from hiding before we have a chance to control it.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    'Inter': require('../assets/font/Inter-VariableFont_opsz,wght.ttf'),
+    'Inter-Italic': require('../assets/font/Inter-Italic-VariableFont_opsz,wght.ttf')
+
+  });
   // ---------------------------------------------------------------
   // 1. Hide the native splash immediately after mount
   // ---------------------------------------------------------------
