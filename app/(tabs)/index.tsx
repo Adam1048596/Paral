@@ -1,10 +1,11 @@
+import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Dimensions, Keyboard, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SearchBar } from '../../components/SearchBar';
 import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 36) / 2;   // two columns with 12px padding on each side
+const CARD_WIDTH = (width - 36) / 2;
 
 // ── Types ──────────────────────────────────────────────
 type Product = {
@@ -19,122 +20,54 @@ type Product = {
   image_main: string | null;
 };
 
-type Category = {
-  id: string;
-  name: string;
-};
-
-type Department = {
-  id: string;
-  name: string;
-};
-
-type Brand = {
-  id: string;
-  name: string;
-};
+// ── Offer data (static for now – replace with Supabase) ─
+const OFFERS = [
+  {
+    id: '1',
+    image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600',
+    title: 'Summer Glow Sale',
+    subtitle: 'Up to 30% off',
+  },
+  {
+    id: '2',
+    image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=600',
+    title: 'New Vitamin C',
+    subtitle: 'Brighten your skin',
+  },
+  {
+    id: '3',
+    image: 'https://images.unsplash.com/photo-1617897903246-719242758050?w=600',
+    title: 'Free Shipping',
+    subtitle: 'On orders above 200 MAD',
+  },
+];
 
 // ── Main Screen ────────────────────────────────────────
 export default function HomeScreen() {
-  // Data states
   const [products, setProducts] = useState<Product[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Search overlay
-  const [searchVisible, setSearchVisible] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const searchInputRef = useRef<TextInput>(null);
+  // Carousel state
+  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
 
-  // Animation values for search overlay
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-  const overlayScale = useRef(new Animated.Value(1.02)).current;
-
-  // Fetch all data
-  const fetchAllData = useCallback(async () => {
-    const [prodRes, deptRes, catRes, brandRes] = await Promise.all([
-      supabase.from('products').select(`
-        id, name, capacity, image_main,
-        brand:brands(name),
-        department:departments(name),
-        category:categories(name),
-        area:areas(name),
-        texture:textures(name)
-      `).limit(30),
-      supabase.from('departments').select('*'),
-      supabase.from('categories').select('*'),
-      supabase.from('brands').select('*'),
-    ]);
-
-    if (prodRes.data) setProducts(prodRes.data);
-    if (deptRes.data) setDepartments(deptRes.data);
-    if (catRes.data) setCategories(catRes.data);
-    if (brandRes.data) setBrands(brandRes.data);
+  // Auto‑scroll
+  useEffect(() => {
+    if (OFFERS.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveOfferIndex((prev) => {
+        const next = (prev + 1) % OFFERS.length;
+        flatListRef.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    fetchAllData().finally(() => setLoading(false));
-  }, [fetchAllData]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchAllData();
-    setRefreshing(false);
-  };
-
-  // Open search
-  const openSearch = () => {
-    setSearchVisible(true);
-    // Fade in overlay
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.spring(overlayScale, {
-        toValue: 1,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    setTimeout(() => searchInputRef.current?.focus(), 200);
-  };
-
-  // Close search
-  const closeSearch = () => {
-    Keyboard.dismiss();
-    Animated.parallel([
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayScale, {
-        toValue: 1.02,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setSearchVisible(false);
-      setSearchText('');
-      setSearchResults([]);
-    });
-  };
-
-  // Live search
-  const handleSearch = async (text: string) => {
-    setSearchText(text);
-    if (!text.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    const { data } = await supabase
+  // Fetch products
+  const fetchProducts = useCallback(async () => {
+    const { data, error } = await supabase
       .from('products')
       .select(`
         id, name, capacity, image_main,
@@ -144,13 +77,20 @@ export default function HomeScreen() {
         area:areas(name),
         texture:textures(name)
       `)
-      .ilike('name', `%${text}%`)
-      .limit(10);
-    setSearchResults(data || []);
-    // Add to recent searches if not already present
-    if (text.trim() && !recentSearches.includes(text.trim())) {
-      setRecentSearches(prev => [text.trim(), ...prev.slice(0, 4)]);
-    }
+      .limit(30);
+
+    if (!error && data) setProducts(data);
+    setLoading(false);
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProducts();
   };
 
   if (loading) {
@@ -163,18 +103,84 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ==================== HOME CONTENT ==================== */}
       <ScrollView
-        contentContainerStyle={styles.scrollContent}  // Add css for ScrollView content
-        showsVerticalScrollIndicator={false}  // Hide vertical scrollbar
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1c7245" />
         }>
+        {/* Search bar */}
+        <SearchBar
+          onSearch={(query) => router.push(`/search-results?query=${encodeURIComponent(query)}`)}
+          onProductPress={(id) => router.push(`/product/${id}`)}
+        />
 
-      <SearchBar onPress={() => setSearchVisible(true)} />
+        {/* ── OFFERS CAROUSEL ──────────────────────────── */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={OFFERS}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / width);
+              setActiveOfferIndex(index);
+            }}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.offerCard} activeOpacity={0.9}>
+                <Image source={{ uri: item.image }} style={styles.offerImage} resizeMode="cover" />
+                <View style={styles.offerOverlay}>
+                  <Text style={styles.offerTitle}>{item.title}</Text>
+                  <Text style={styles.offerSubtitle}>{item.subtitle}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+          {/* Dot indicators */}
+          {OFFERS.length > 1 && (
+            <View style={styles.dotsRow}>
+              {OFFERS.map((_, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.dot,
+                    { backgroundColor: idx === activeOfferIndex ? '#1c7245' : '#D1D5DB' },
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
 
-
-
+        {/* ── PRODUCT GRID ──────────────────────────────── */}
+        <View style={styles.productGrid}>
+          {products.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.productCard}
+              activeOpacity={0.9}
+              onPress={() => router.push(`/product/${item.id}`)}>
+              <View style={styles.imageContainer}>
+                {item.image_main ? (
+                  <Image source={{ uri: item.image_main }} style={styles.image} resizeMode="cover" />
+                ) : (
+                  <View style={styles.noImage}>
+                    <Text style={styles.noImageText}>No Image</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.productInfo}>
+                <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                <Text style={styles.productBrand}>{item.brand?.name || 'Unknown brand'}</Text>
+                <Text style={styles.productDetails}>
+                  {item.category?.name || ''}{item.capacity ? ` · ${item.capacity}` : ''}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -184,68 +190,56 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f3f3' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingTop: 50, paddingBottom: 1000 },   // space for tab bar
+  scrollContent: { paddingTop: 50, paddingBottom: 100 },
 
-  // Greeting
-  greeting: { fontSize: 28, fontWeight: '700', color: '#0F1419', paddingHorizontal: 16, marginTop: 20 },
-  subtitle: { fontSize: 16, color: '#536471', paddingHorizontal: 16, marginBottom: 20 },
-
-  // Search bar
-  searchBar: {
-    marginHorizontal: 16,
-    backgroundColor: '#F2F4F7',
-    borderRadius: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 60,
-    marginBottom: 24,
+  // Carousel
+  carouselContainer: {
+    marginTop: 20,
+    marginBottom: 20,
   },
-  searchPlaceholder: { flex: 1, marginLeft: 10, color: '#8E8E93', fontSize: 16 },
-  
-  // Sections
-  sectionTitle: { fontSize: 20, fontWeight: '600', color: '#0F1419', paddingHorizontal: 16, marginBottom: 12, marginTop: 8 },
-
-  // Department chips
-  chipsScroll: { paddingLeft: 16, marginBottom: 20 },
-  chip: {
-    backgroundColor: '#F2F4F7',
+  offerCard: {
+    width: width - 32,
+    height: 140,
     borderRadius: 20,
+    overflow: 'hidden',
+    marginHorizontal: 16,
+    backgroundColor: '#F0F0F0',
+  },
+  offerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  offerOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.35)',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 10,
+    paddingVertical: 12,
   },
-  chipText: { fontSize: 14, color: '#0F1419', textTransform: 'capitalize' },
-
-  // Categories
-  catScroll: { paddingLeft: 16, marginBottom: 20 },
-  catCard: {
-    width: 100,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginRight: 12,
+  offerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
   },
-  catIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  catName: { fontSize: 12, color: '#0F1419', textAlign: 'center' },
-
-  // Brands
-  brandScroll: { paddingLeft: 16, marginBottom: 20 },
-  brandCard: {
-    width: 100,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginRight: 12,
+  offerSubtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#F0F0F0',
   },
-  brandLogo: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  brandName: { fontSize: 12, color: '#0F1419', textAlign: 'center' },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
 
   // Product grid
   productGrid: {
@@ -276,63 +270,4 @@ const styles = StyleSheet.create({
   productName: { fontSize: 14, fontWeight: '600', color: '#0F1419', marginBottom: 4, lineHeight: 18 },
   productBrand: { fontSize: 12, color: '#536471', marginBottom: 2 },
   productDetails: { fontSize: 11, color: '#B0B8C1' },
-
-  // ======== SEARCH OVERLAY ========
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 10,
-  },
-  overlayContent: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 16,
-  },
-  overlaySearchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    height: 60,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  overlayInput: { flex: 1, marginLeft: 10, fontSize: 16, color: '#0F1419' },
-  overlaySectionTitle: { fontSize: 18, fontWeight: '600', color: '#0F1419', marginBottom: 12 },
-
-  // Recent searches
-  recentRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
-  recentChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F4F7',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  recentChipText: { fontSize: 14, color: '#0F1419', marginRight: 6 },
-
-  // Search results
-  searchResultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  searchResultImage: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#F7F9F9', marginRight: 12 },
-  searchResultInfo: { flex: 1 },
-  searchResultName: { fontSize: 15, fontWeight: '600', color: '#0F1419' },
-  searchResultBrand: { fontSize: 13, color: '#536471', marginTop: 2 },
-  searchResultCat: { fontSize: 12, color: '#B0B8C1', marginTop: 2 },
-
-  // Empty state
-  emptySearch: { alignItems: 'center', marginTop: 40 },
-  emptySearchText: { fontSize: 15, color: '#8E8E93', marginTop: 12 },
 });
