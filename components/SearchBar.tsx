@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Keyboard,
   ScrollView,
@@ -12,40 +13,78 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { supabase } from '../lib/supabase'; // adjust path as needed
 
 type Props = {
+  onSearch?: (query: string) => void;
   onProductPress?: (productId: string) => void;
+};
+
+type Department = {
+  id: number;
+  name_en: string;
+  slug: string;
+};
+
+type Category = {
+  id: number;
+  name_en: string;
+  slug: string;
 };
 
 const STATUS_BAR_H = StatusBar.currentHeight ?? 50;
 
-// ---- Tab content data structure ----
-const TAB_DATA: Record<string, { suggested: string[]; categories: string[] }> = {
-  Skincare: {
-    suggested: ['Dry Skin', 'Combination Skin', 'Oily Skin', 'Sensitive Skin'],
-    categories: ['Serum', 'Moisturizer', 'Cleanser', 'Sunscreen', 'Toner'],
-  },
-  Supplements: {
-    suggested: ['Vitamin C', 'Collagen', 'Omega‑3', 'Multivitamin', 'Probiotics'],
-    categories: ['Powder', 'Capsules', 'Gummies', 'Liquids', 'Teas'],
-  },
-  Accessories: {
-    suggested: ['Facial Roller', 'Spatula', 'Headband', 'Brush', 'Cotton Pads'],
-    categories: ['Tools', 'Brushes', 'Headbands', 'Cotton', 'Bottles'],
-  },
-};
-
-// ---- Static icon mapping (fixed for Metro) ----
+// ---- Static icon mapping (can be extended with new departments) ----
 const ICON_MAP: Record<string, any> = {
   skincare: require('../assets/icons/skincare.png'),
   supplements: require('../assets/icons/supplements.png'),
   accessories: require('../assets/icons/accessories.png'),
+  makeup: require('../assets/icons/skincare.png'),   // fallback
+  hygiene: require('../assets/icons/skincare.png'),
+  'oral-dental': require('../assets/icons/skincare.png'),
+  'babies-moms': require('../assets/icons/skincare.png'),
 };
 
-export const SearchBar = ({ onProductPress }: Props) => {
+export const SearchBar = ({ onSearch, onProductPress }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [activeTab, setActiveTab] = useState('Skincare');
+  const [activeTab, setActiveTab] = useState('');
+
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch departments on first open
+  useEffect(() => {
+    if (expanded && departments.length === 0) {
+      fetchDepartments();
+    }
+  }, [expanded]);
+
+  const fetchDepartments = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('departments').select('id, name_en, slug');
+    setDepartments(data || []);
+    if (data?.length) {
+      setActiveTab(data[0].name_en);   // default to first department
+      fetchCategories(data[0].id);
+    }
+    setLoading(false);
+  };
+
+  const fetchCategories = async (departmentId: number) => {
+    const { data } = await supabase
+      .from('categories')
+      .select('id, name_en, slug')
+      .eq('department_id', departmentId)
+      .limit(10);
+    setCategories(data || []);
+  };
+
+  const handleTabPress = (dept: Department) => {
+    setActiveTab(dept.name_en);
+    fetchCategories(dept.id);
+  };
 
   const openSearch = () => setExpanded(true);
 
@@ -53,6 +92,14 @@ export const SearchBar = ({ onProductPress }: Props) => {
     Keyboard.dismiss();
     setExpanded(false);
     setSearchText('');
+  };
+
+  const handleSearchSubmit = () => {
+    const trimmed = searchText.trim();
+    if (trimmed && onSearch) {
+      onSearch(trimmed);
+    }
+    closeSearch();
   };
 
   // Collapsed pill
@@ -69,39 +116,41 @@ export const SearchBar = ({ onProductPress }: Props) => {
     );
   }
 
-  // Get the current tab data
-  const currentTab = TAB_DATA[activeTab];
-
   // Expanded panel
   return (
     <View style={styles.overlay}>
-      {/* Blur background */}
       <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
 
-      {/* Tabs row */}
+      {/* Tabs row – dynamically from departments */}
       <View style={styles.tabsRowOuter}>
-        <View style={styles.tabsRow}>
-          {Object.keys(TAB_DATA).map((tabName) => {
-            const isActive = tabName === activeTab;
-            return (
-              <TouchableOpacity
-                key={tabName}
-                style={[styles.tab, isActive && styles.activeTab]}
-                onPress={() => setActiveTab(tabName)}>
-                {isActive && (
-                  <Image
-                    source={ICON_MAP[tabName.toLowerCase()]}
-                    style={styles.tabIcon}
-                    resizeMode="contain"
-                  />
-                )}
-                <Text style={[styles.tabText, isActive && styles.activeTabText]}>
-                  {tabName}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsScrollContainer}
+        >
+          {loading && departments.length === 0 ? (
+            <ActivityIndicator size="small" color="#1c7245" style={{ marginRight: 20 }} />
+          ) : (
+            departments.map((dept) => {
+              const isActive = dept.name_en === activeTab;
+              const icon = ICON_MAP[dept.slug] || ICON_MAP['skincare'];
+              return (
+                <TouchableOpacity
+                  key={dept.id}
+                  style={[styles.tab, isActive && styles.activeTab]}
+                  onPress={() => handleTabPress(dept)}
+                >
+                  {isActive && (
+                    <Image source={icon} style={styles.tabIcon} resizeMode="contain" />
+                  )}
+                  <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+                    {dept.name_en}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </ScrollView>
 
         <TouchableOpacity style={styles.closeButton} onPress={closeSearch}>
           <Ionicons name="close" size={24} color="#292d32" />
@@ -121,6 +170,7 @@ export const SearchBar = ({ onProductPress }: Props) => {
             onChangeText={setSearchText}
             autoFocus={false}
             returnKeyType="search"
+            onSubmitEditing={handleSearchSubmit}
           />
           {searchText.length > 0 && (
             <TouchableOpacity onPress={() => setSearchText('')}>
@@ -129,36 +179,40 @@ export const SearchBar = ({ onProductPress }: Props) => {
           )}
         </View>
 
-        {/* Scrollable suggestions – dynamic per active tab */}
+        {/* Scrollable suggestions – categories of active department */}
         <ScrollView
           style={styles.suggestionsScroll}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.sectionTitle}>Suggested Searches</Text>
-          {currentTab.suggested.map((item, idx) => (
+          {categories.slice(0, 5).map((cat, idx) => (
             <TouchableOpacity
-              key={idx}
+              key={cat.id}
               style={styles.suggestionItem}
-              onPress={() => setSearchText(item)}>
+              onPress={() => {
+                if (onSearch) onSearch(cat.name_en);
+                closeSearch();
+              }}
+            >
               <Ionicons name="search-outline" size={18} color="#8E8E93" />
-              <Text style={styles.suggestionText}>{item}</Text>
+              <Text style={styles.suggestionText}>{cat.name_en}</Text>
             </TouchableOpacity>
           ))}
 
           <Text style={styles.sectionTitle}>Popular Categories</Text>
           <View style={styles.chipRow}>
-            {currentTab.categories.map((cat, idx) => (
+            {categories.map((cat) => (
               <TouchableOpacity
-                key={idx}
+                key={cat.id}
                 style={styles.chip}
-                onPress={() => setSearchText(cat)}>
-                <Ionicons
-                  name="leaf-outline"
-                  size={16}
-                  color="#292d32"
-                  style={{ marginRight: 6 }}
-                />
-                <Text style={styles.chipText}>{cat}</Text>
+                onPress={() => {
+                  if (onSearch) onSearch(cat.name_en);
+                  closeSearch();
+                }}
+              >
+                <Ionicons name="leaf-outline" size={16} color="#292d32" style={{ marginRight: 6 }} />
+                <Text style={styles.chipText}>{cat.name_en}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -167,6 +221,7 @@ export const SearchBar = ({ onProductPress }: Props) => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   // Collapsed pill

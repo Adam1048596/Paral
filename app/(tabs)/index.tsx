@@ -55,51 +55,44 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, []);
 
-const fetchAll = useCallback(async () => {
-  setLoading(true);
-  try {
-    const [prodRes, deptRes, catRes, brandRes] = await Promise.all([
-      supabase
-        .from('products')
-        .select(`
-          id,
-          name,
-          price,
-          image_main,
-          brand:brands(id, name),
-          department:departments(id, name_en)
-        `)
-        .limit(10),
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [prodRes, deptRes, catRes, brandRes] = await Promise.all([
+        supabase
+          .from('products')
+          .select(`
+            id,
+            name,
+            price,
+            image_main,
+            brand:brands(id, name),
+            department:departments(id, name_en)
+          `)
+          .limit(10),
 
-      supabase.from('departments').select('id, name_en, slug'),
+        supabase.from('departments').select('id, name_en, slug'),
 
-      supabase
-        .from('categories')
-        .select('id, name_en, slug, department_id')
-        .limit(50),
+        supabase
+          .from('categories')
+          .select('id, name_en, slug, department_id')
+          .limit(10),
 
-      supabase.from('brands').select('id, name').limit(30),
-    ]);
+        supabase.from('brands').select('id, name').limit(30),
+      ]);
 
-    // --- Set states ---
-    if (prodRes.error) console.error('Products error:', prodRes.error);
-    else setProducts(prodRes.data || []);
-
-    if (deptRes.error) console.error('Departments error:', deptRes.error);
-    else setDepartments(deptRes.data || []);
-
-    if (catRes.error) console.error('Categories error:', catRes.error);
-    else setCategories(catRes.data || []);
-
-    if (brandRes.error) console.error('Brands error:', brandRes.error);
-    else setBrands(brandRes.data || []);
-  } catch (err) {
-    console.error('Fetch error:', err);
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-}, []);
+      console.log('Products:', prodRes);
+      console.log('Departments:', deptRes);
+      console.log('Categories:', catRes);
+      console.log('Brands:', brandRes);
+      console.log('RENDER departments:', departments.length);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
 // fetch departments
 useEffect(() => { async function loadDepartments() {
