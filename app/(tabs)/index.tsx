@@ -332,7 +332,7 @@ function ProductCardHorizontal({ product }: { product: Product }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f3f3' },
+  container: { flex: 1, backgroundColor: '#e3e3e3' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { paddingTop: 50, paddingBottom: 100 },
   sectionContainer: { marginTop: 20, marginBottom: 10 },
