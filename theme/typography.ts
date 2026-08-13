@@ -17,9 +17,9 @@ export const typography: Record<string, TextStyle> = {
   // ---- Headings ----
   title: {
     fontFamily: font.bold,    
-    fontSize: 18,
+    fontSize: 19,
     color: colors.textPrimary,
-    letterSpacing: 1,
+    letterSpacing: 0,
     marginLeft: 50,
     marginBottom: 20,
   },
