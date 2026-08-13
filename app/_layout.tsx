@@ -19,8 +19,12 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    'Inter': require('../assets/font/Inter-VariableFont_opsz,wght.ttf'),
-    'Inter-Italic': require('../assets/font/Inter-Italic-VariableFont_opsz,wght.ttf')
+    'AirbnbCereal_W_Bd': require('../assets/font/AirbnbCereal_W_Bd.otf'),
+    'AirbnbCereal_W_Bk': require('../assets/font/AirbnbCereal_W_Bk.otf'),
+    'AirbnbCereal_W_Blk': require('../assets/font/AirbnbCereal_W_Blk.otf'),
+    'AirbnbCereal_W_Lt': require('../assets/font/AirbnbCereal_W_Lt.otf'),
+    'AirbnbCereal_W_Md': require('../assets/font/AirbnbCereal_W_Md.otf'),
+    'AirbnbCereal_W_XBd': require('../assets/font/AirbnbCereal_W_XBd.otf'),
 
   });
   // ---------------------------------------------------------------
