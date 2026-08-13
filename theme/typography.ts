@@ -17,10 +17,10 @@ export const typography: Record<string, TextStyle> = {
   // ---- Headings ----
   title: {
     fontFamily: font.bold,    
-    fontSize: 20,
+    fontSize: 18,
     color: colors.textPrimary,
     letterSpacing: 1,
-    marginLeft: 70,
+    marginLeft: 50,
     marginBottom: 20,
   },
   h1: {

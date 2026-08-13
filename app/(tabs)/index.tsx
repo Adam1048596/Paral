@@ -80,7 +80,7 @@ export default function HomeScreen() {
         />
 
         {/* Featured Products */}
-        <Text style={typography.title}>ALPHASCIECE</Text>
+        <Text style={typography.title}>Les Plus Demandés</Text>
         <FlatList
           ref={featuredRef}
           data={featuredProducts}
