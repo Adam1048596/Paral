@@ -1,27 +1,25 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import { SearchBar } from '../../components/SearchBar';
 import { supabase } from '../../lib/supabase';
 import { typography } from '../../theme/typography';
 
+// Type now includes details (JSONB)
 type FeaturedProduct = {
   id: number;
   name: string;
   price: number;
   image_main: string | null;
   brand: { name: string } | null;
+  details: {
+    short_description?: {
+      en?: string;
+      fr?: string;
+      ar?: string;
+    };
+  } | null;
 };
 
 export default function HomeScreen() {
@@ -41,6 +39,7 @@ export default function HomeScreen() {
           name,
           price,
           image_main,
+          details,
           brand:brands(name)
         )
       `)
@@ -122,19 +121,24 @@ export default function HomeScreen() {
   );
 }
 
-// ── Featured Product Card ──────────────────────────────
+// ── Featured Product Card with description ─────────────
 function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
+  // Extract short description (English first, fallback to French)
+  const shortDesc =
+    product.details?.short_description?.en ||
+    product.details?.short_description?.fr ||
+    '';
+
   return (
     <TouchableOpacity
       style={styles.featuredCard}
       activeOpacity={0.9}
       onPress={() => router.push(`/product/${product.id}`)}
     >
-      {/* Gradient background */}
       <LinearGradient
-        colors={['#f7f7f7', '#ebebeb']}      // dark green gradient
+        colors={['#1c7245', '#0F5132']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
       >
         {/* Left – text */}
@@ -143,8 +147,14 @@ function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
           <Text style={styles.featuredCardName} numberOfLines={2}>
             {product.name}
           </Text>
+          {/* Short description (2 lines max) */}
+          {shortDesc ? (
+            <Text style={styles.featuredCardDescription} numberOfLines={2}>
+              {shortDesc}
+            </Text>
+          ) : null}
           <Text style={styles.featuredCardPrice}>
-            {product.price?.toFixed(2) || '0.00'} MAD
+            MAD {product.price?.toFixed(2) || '0.00'}
           </Text>
           <TouchableOpacity
             style={styles.featuredCardButton}
@@ -197,20 +207,26 @@ const styles = StyleSheet.create({
   },
   featuredCardBrand: {
     fontSize: 13,
-    color: '#606060',
+    color: '#A7F3D0',
     fontWeight: '600',
     marginBottom: 8,
   },
   featuredCardName: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000',
+    color: '#FFFFFF',
     marginBottom: 8,
+  },
+  featuredCardDescription: {
+    fontSize: 14,
+    color: '#E0F2E9',
+    lineHeight: 18,
+    marginBottom: 12,
   },
   featuredCardPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#000',
+    color: '#FFFFFF',
     marginBottom: 16,
   },
   featuredCardButton: {
@@ -228,6 +244,7 @@ const styles = StyleSheet.create({
   featuredCardImageContainer: {
     width: '45%',
     height: '100%',
+    backgroundColor: '#F0F0F0',
   },
   featuredCardImage: {
     width: '100%',
