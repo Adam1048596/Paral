@@ -88,4 +88,36 @@ export const typography: Record<string, TextStyle> = {
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+
+  // ---- NEW: Card-specific text styles ----
+  brand: {
+    fontFamily: font.medium,
+    fontSize: 10,
+    color: '#848484',
+    marginBottom: 3,
+},
+  productName: {
+    fontFamily: font.bold,
+    fontSize: 20,
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  description: {
+    fontFamily: font.book,
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  price: {
+    fontFamily: font.bold,
+    fontSize: 25,
+    color: colors.primary,
+    marginBottom: 16,
+  },
+  priceDecimal: {
+    fontFamily: font.medium,
+    fontSize: 14,
+    color: colors.primary,
+  },
 };

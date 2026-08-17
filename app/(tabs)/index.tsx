@@ -121,9 +121,8 @@ export default function HomeScreen() {
   );
 }
 
-// ── Featured Product Card with description ─────────────
+
 function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
-  // Extract short description (English first, fallback to French)
   const shortDesc =
     product.details?.short_description?.en ||
     product.details?.short_description?.fr ||
@@ -136,31 +135,41 @@ function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
       onPress={() => router.push(`/product/${product.id}`)}
     >
       <LinearGradient
-        colors={['#1c7245', '#0F5132']}
+        colors={['#f7f7f7', '#ebebeb']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={styles.gradientBackground}
       >
         {/* Left – text */}
         <View style={styles.featuredCardContent}>
-          <Text style={styles.featuredCardBrand}>{product.brand?.name || ''}</Text>
-          <Text style={styles.featuredCardName} numberOfLines={2}>
+          <Text style={typography.brand}>{product.brand?.name || ''}</Text>
+          <Text style={typography.productName} numberOfLines={2}>
             {product.name}
           </Text>
-          {/* Short description (2 lines max) */}
           {shortDesc ? (
-            <Text style={styles.featuredCardDescription} numberOfLines={2}>
+            <Text style={typography.description} numberOfLines={2}>
               {shortDesc}
             </Text>
           ) : null}
-          <Text style={styles.featuredCardPrice}>
-            MAD {product.price?.toFixed(2) || '0.00'}
-          </Text>
+          
+          {(() => {
+            const priceString = product.price?.toFixed(2) || '0.00';
+            const [integer, decimal] = priceString.split('.');
+            return (
+              <Text style={typography.price}>
+                {integer}
+                <Text style={typography.priceDecimal}>
+                  .{decimal} MAD
+                </Text>
+              </Text>
+            );
+          })()}
+          
           <TouchableOpacity
             style={styles.featuredCardButton}
             onPress={() => router.push(`/product/${product.id}`)}
           >
-            <Text style={styles.featuredCardButtonText}>Shop Now</Text>
+            <Text style={typography.button}>Shop Now</Text>
           </TouchableOpacity>
         </View>
 
@@ -244,7 +253,6 @@ const styles = StyleSheet.create({
   featuredCardImageContainer: {
     width: '45%',
     height: '100%',
-    backgroundColor: '#F0F0F0',
   },
   featuredCardImage: {
     width: '100%',

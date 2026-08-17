@@ -1,6 +1,6 @@
 export const colors = {
   // ── Primary green brand ────────────────────────────
-  primary: '#73b504',        // main accent (buttons, links, active states)
+  primary: '#1c7245',        // main accent (buttons, links, active states)
 
   // ── Neutrals ───────────────────────────────────────
   white: '#FFFFFF',
