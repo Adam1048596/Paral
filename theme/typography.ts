@@ -78,7 +78,7 @@ export const typography: Record<string, TextStyle> = {
   button: {
     fontFamily: font.medium,      
     fontSize: sizes.body,
-    color: colors.white,
+    color: '#000',
     lineHeight: sizes.body * 1.4,
   },
   label: {
@@ -90,34 +90,10 @@ export const typography: Record<string, TextStyle> = {
   },
 
   // ---- NEW: Card-specific text styles ----
-  brand: {
-    fontFamily: font.medium,
-    fontSize: 10,
-    color: '#848484',
-    marginBottom: 3,
-},
-  productName: {
-    fontFamily: font.bold,
-    fontSize: 20,
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  description: {
-    fontFamily: font.book,
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  price: {
-    fontFamily: font.bold,
-    fontSize: 25,
-    color: colors.primary,
-    marginBottom: 16,
-  },
-  priceDecimal: {
-    fontFamily: font.medium,
-    fontSize: 14,
-    color: colors.primary,
-  },
+  brand: { fontFamily: font.medium, fontSize: 10, color: colors.textSecondary, },
+  productName: { fontFamily: font.bold, fontSize: 20, color: colors.textPrimary, },
+  description: { fontFamily: font.book, fontSize: 14, color: colors.textSecondary, lineHeight: 18, },
+  
+  price: { fontFamily: font.bold, fontSize: 25, color: colors.primary, },
+  priceDecimal: { fontFamily: font.medium, fontSize: 11, color: colors.primary, },
 };

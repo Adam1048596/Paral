@@ -143,11 +143,11 @@ function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
         {/* Left – text */}
         <View style={styles.featuredCardContent}>
           <Text style={typography.brand}>{product.brand?.name || ''}</Text>
-          <Text style={typography.productName} numberOfLines={2}>
+          <Text style={typography.productName} >
             {product.name}
           </Text>
           {shortDesc ? (
-            <Text style={typography.description} numberOfLines={2}>
+            <Text style={typography.description} >
               {shortDesc}
             </Text>
           ) : null}
@@ -164,13 +164,7 @@ function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
               </Text>
             );
           })()}
-          
-          <TouchableOpacity
-            style={styles.featuredCardButton}
-            onPress={() => router.push(`/product/${product.id}`)}
-          >
-            <Text style={typography.button}>Shop Now</Text>
-          </TouchableOpacity>
+
         </View>
 
         {/* Right – image */}
@@ -180,6 +174,9 @@ function FeaturedProductCard({ product }: { product: FeaturedProduct }) {
             style={styles.featuredCardImage}
             resizeMode="cover"
           />
+          <TouchableOpacity style={styles.featuredCardButton} onPress={() => router.push(`/product/${product.id}`)} >
+            <Text style={typography.button}>See Details</Text>
+          </TouchableOpacity>
         </View>
       </LinearGradient>
     </TouchableOpacity>
@@ -238,13 +235,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 16,
   },
-  featuredCardButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    alignSelf: 'flex-start',
-  },
   featuredCardButtonText: {
     color: '#1c7245',
     fontWeight: '600',
@@ -253,9 +243,21 @@ const styles = StyleSheet.create({
   featuredCardImageContainer: {
     width: '45%',
     height: '100%',
+    flexDirection: 'column',
   },
   featuredCardImage: {
+    flex: 1,
     width: '100%',
-    height: '100%',
+  },
+  featuredCardButton: {
+    backgroundColor: '#f8f8f8',
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    alignSelf: 'center',
+    marginBottom: 20,
+    marginTop: 8,
   },
 });
